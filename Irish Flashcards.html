@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="ga">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Na Mílte Focal — Irish Flashcards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Karla:wght@300;400;500;600;700&family=Uncial+Antiqua&display=swap" rel="stylesheet">
+  <style>
+/* Irish Flashcards — shared styles */
+
+:root {
+  /* BOG & STONE palette (Variation A — daylight) */
+  --a-parchment: #f4efe4;
+  --a-parchment-2: #ece5d4;
+  --a-moss-deep: #2f4a2e;
+  --a-moss: #5b7a3d;
+  --a-moss-soft: #a6b687;
+  --a-peat: #6b4423;
+  --a-peat-soft: #b69372;
+  --a-stone: #8a8577;
+  --a-stone-dark: #514d43;
+  --a-ink: #1e1b14;
+  --a-rust: #b8562f;
+  --a-gold: #c49a3f;
+
+  /* ATLANTIC DUSK palette (Variation B — evening, manuscript) */
+  --b-vellum: #efe7d1;
+  --b-vellum-2: #e5dbbf;
+  --b-ink: #1a2230;
+  --b-teal-deep: #0f3a3a;
+  --b-teal: #1d5a58;
+  --b-teal-soft: #5a8a86;
+  --b-gold: #c28f2c;
+  --b-gold-soft: #e3b85c;
+  --b-rust: #a43e20;
+  --b-plum: #4a2340;
+}
+
+* { -webkit-font-smoothing: antialiased; }
+
+.serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+.uncial { font-family: 'Uncial Antiqua', 'Cormorant Garamond', serif; letter-spacing: 0.5px; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+.sans { font-family: 'Karla', 'Helvetica Neue', Helvetica, sans-serif; }
+
+/* Ogham tick — a vertical stem with angled ticks, used as a tasteful motif */
+.ogham-rule {
+  height: 14px;
+  background-image:
+    linear-gradient(to bottom, transparent 6px, currentColor 6px, currentColor 8px, transparent 8px);
+  background-size: 100% 14px;
+  opacity: 0.25;
+}
+
+/* Knotwork border — pure CSS geometric, no hand-drawn SVG */
+.knot-corner {
+  width: 28px; height: 28px;
+  position: relative;
+}
+.knot-corner::before, .knot-corner::after {
+  content: ''; position: absolute; inset: 0;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.knot-corner::after {
+  inset: 6px; opacity: 0.5;
+}
+
+.flip-card {
+  perspective: 1400px;
+}
+.flip-inner {
+  transition: transform 0.55s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform-style: preserve-3d;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.flip-inner.flipped { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 20px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.flip-back { transform: rotateY(180deg); }
+
+/* Subtle paper texture with a tiny noise layer */
+.paper-a {
+  background-color: var(--a-parchment);
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(196,154,63,0.08), transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(91,122,61,0.08), transparent 55%);
+}
+.paper-b {
+  background-color: var(--b-vellum);
+  background-image:
+    radial-gradient(ellipse at 80% 10%, rgba(194,143,44,0.12), transparent 55%),
+    radial-gradient(ellipse at 20% 90%, rgba(29,90,88,0.10), transparent 55%);
+}
+
+/* Scrollbar polish inside the phone */
+.phone-scroll::-webkit-scrollbar { width: 0; }
+
+/* Shake on wrong answer */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.shake { animation: shake 0.35s ease; }
+
+/* Tap feedback */
+.btn {
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.15s ease, background 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(0.97); }
+
+/* Streak flame pulse */
+@keyframes flicker {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.95); }
+}
+.flicker { animation: flicker 2s ease-in-out infinite; }
+
+/* Confetti-ish — little floating dot */
+@keyframes float-up {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(-120px) rotate(360deg); opacity: 0; }
+}
+
+/* Focal slider — Bog & Stone themed */
+.focal-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--a-parchment-2);
+  border-radius: 4px;
+  outline: none;
+  margin: 6px 0;
+}
+.focal-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--a-moss-deep);
+  border: 3px solid var(--a-parchment);
+  box-shadow: 0 1px 3px rgba(30, 27, 20, 0.25);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.focal-slider::-webkit-slider-thumb:hover { transform: scale(1.08); }
+.focal-slider::-webkit-slider-thumb:active { transform: scale(0.95); }
+.focal-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--a-moss-deep);
+  border: 3px solid var(--a-parchment);
+  box-shadow: 0 1px 3px rgba(30, 27, 20, 0.25);
+  cursor: pointer;
+}
+.focal-slider::-moz-range-track {
+  height: 4px;
+  background: var(--a-parchment-2);
+  border-radius: 4px;
+}
+  html, body { margin: 0; padding: 0; height: 100%; background: #f4efe4; font-family: 'Karla', sans-serif; }
+  #root { height: 100%; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script>
+// Top 1000 Irish words by frequency
+window.IRISH_WORDS = [
+  [1,"an","the"],[2,"bí","be"],[3,"ar","on"],[4,"agus","and"],[5,"is","is (copula)"],
+  [6,"ag","at / -ing"],[7,"le","with"],[8,"na","the (plural/gen.)"],[9,"do","to / your"],[10,"go","to / that"],
+  [11,"de","of / from"],[12,"sé","he / it"],[13,"sin","that"],[14,"ó","from / since"],[15,"é","him / it"],
+  [16,"seo","this"],[17,"cuir","put / send"],[18,"mar","as / because"],[19,"ach","but"],[20,"déan","do / make"],
+  [21,"faoi","about / under"],[22,"nó","or"],[23,"duine","person"],[24,"tabhair","give / bring"],[25,"féin","self"],
+  [26,"ní","not / thing"],[27,"aon","any / one"],[28,"as","out of / from"],[29,"chun","to / towards"],[30,"eile","other / else"],
+  [31,"abair","say"],[32,"mé","me / I"],[33,"tar","come"],[34,"cuid","part / share"],[35,"maith","good"],
+  [36,"faigh","get / find"],[37,"sí","she"],[38,"ná","than / nor / don't"],[39,"bliain","year"],[40,"siad","they"],
+  [41,"téigh","go"],[42,"nuair","when"],[43,"iad","them"],[44,"amach","out"],[45,"mo","my"],
+  [46,"cé","who / which"],[47,"nach","that not / not?"],[48,"bain","extract / win / reap"],[49,"ceann","head / one"],[50,"gach","every"],
+  [51,"tú","you"],[52,"rud","thing"],[53,"í","her"],[54,"caith","spend / throw / wear"],[55,"Gaeilge","Irish (language)"],
+  [56,"trí","three / through"],[57,"gan","without"],[58,"féidir","possible"],[59,"lá","day"],[60,"chomh","as / so (equally)"],
+  [61,"fear","man"],[62,"isteach","in / into"],[63,"fad","length / while"],[64,"áit","place"],[65,"beag","small"],
+  [66,"am","time"],[67,"chuig","to / towards"],[68,"Éire","Ireland"],[69,"obair","work"],[70,"céad","first / hundred"],
+  [71,"amháin","only / one"],[72,"taobh","side"],[73,"anois","now"],[74,"céile","spouse / each other"],[75,"mac","son"],
+  [76,"feic","see"],[77,"níos","more (comparative)"],[78,"má","if"],[79,"teach","house"],[80,"ceart","right / correct"],
+  [81,"gur","that (past/copula)"],[82,"idir","between"],[83,"scéal","story / news"],[84,"tír","country / land"],[85,"saol","life / world"],
+  [86,"bith","any / existence"],[87,"roimh","before"],[88,"féad","be able"],[89,"ceist","question"],[90,"ansin","then / there"],
+  [91,"deireadh","end"],[92,"bean","woman / wife"],[93,"dóigh","way / manner / burn"],[94,"dá","if / two (leniting)"],[95,"fios","knowledge"],
+  [96,"uair","time / hour / once"],[97,"alt","joint / article / section"],[98,"te","hot"],[99,"pobal","community / public"],[100,"comhairle","council / advice"],
+  [101,"éirigh","rise / become"],[102,"i","in"],[103,"aghaidh","face / against"],[104,"céanna","same"],[105,"arsa","said (quoting)"],
+  [106,"súil","eye / hope"],[107,"scoil","school"],[108,"síos","down"],[109,"fág","leave"],[110,"nua","new"],
+  [111,"glac","accept / take"],[112,"roinn","divide / share / department"],[113,"arís","again"],[114,"maidir","regarding"],[115,"teanga","language / tongue"],
+  [116,"cás","case"],[117,"úsáid","use"],[118,"leith","half / particular"],[119,"iarr","ask / request"],[120,"tóg","build / raise / take"],
+  [121,"óg","young"],[122,"níor","did not"],[123,"anseo","here"],[124,"thar","over / past / beyond"],[125,"tuig","understand"],
+  [126,"oíche","night"],[127,"aire","attention / care / minister"],[128,"baile","home / town"],[129,"cad","what"],[130,"lucht","people / group"],
+  [131,"cúrsa","course"],[132,"eolas","knowledge / information"],[133,"imigh","leave / go away"],[134,"méid","amount / size"],[135,"leor","enough"],
+  [136,"lean","follow / continue"],[137,"fada","long"],[138,"caint","talk / speech"],[139,"leabhar","book"],[140,"scríobh","write"],
+  [141,"acht","act (legislation)"],[142,"seachtain","week"],[143,"feidhm","function / use"],[144,"lámh","hand"],[145,"ceap","think / compose / block"],
+  [146,"tarlaigh","happen"],[147,"ais","back (ar ais)"],[148,"mí","month"],[149,"léir","clear / entire"],[150,"áirigh","count / include / feel"],
+  [151,"ábhar","subject / material / cause"],[152,"féach","look / try"],[153,"bealach","way / road"],[154,"ard","high / tall"],[155,"páiste","child"],
+  [156,"muintir","people / family"],[157,"airgead","money"],[158,"béal","mouth"],[159,"freisin","also"],[160,"bord","table / board"],
+  [161,"rialtas","government"],[162,"uile","all / every"],[163,"siúil","walk"],[164,"bunaigh","establish / found"],[165,"gabh","go / take / seize"],
+  [166,"diaidh","after (i ndiaidh)"],[167,"stát","state"],[168,"ainm","name"],[169,"suas","up"],[170,"athair","father"],
+  [171,"dia","God / god"],[172,"fós","yet / still"],[173,"ár","our"],[174,"ea","it (in copula)"],[175,"seirbhís","service"],
+  [176,"éigin","some / certain"],[177,"clár","programme / board / plain"],[178,"talamh","land / ground"],[179,"buail","hit / strike / meet"],[180,"riamh","ever / never"],
+  [181,"muid","we / us"],[182,"focal","word"],[183,"tús","beginning / start"],[184,"mise","me (emphatic)"],[185,"beirt","two people / pair"],
+  [186,"fiú","worth / even"],[187,"linn","with us / pool / age"],[188,"fan","wait / stay"],[189,"dar","by (in oaths) / according to"],[190,"contae","county"],
+  [191,"foireann","team / staff"],[192,"meas","respect / think / estimate"],[193,"measc","mix / among (i measc)"],[194,"leag","knock / lay down"],[195,"bóthar","road"],
+  [196,"labhair","speak"],[197,"clois","hear"],[198,"cónaí","living / dwelling"],[199,"ceol","music"],[200,"bás","death"],
+  [201,"cur","putting / sowing"],[202,"nár","that not (past)"],[203,"tosaigh","start / begin"],[204,"ceantar","area / district"],[205,"údarás","authority"],
+  [206,"léirigh","show / demonstrate"],[207,"gá","need / necessity"],[208,"thart","around / over / past"],[209,"minic","often"],[210,"cluiche","game / match"],
+  [211,"anuas","down (from above)"],[212,"iomlán","total / complete"],[213,"cóir","fair / just / ought"],[214,"conradh","contract / league"],[215,"ionad","centre / place"],
+  [216,"uisce","water"],[217,"díreach","exactly / straight / just"],[218,"geall","bet / promise / pledge"],[219,"oileán","island"],[220,"cinn","of head / decide"],
+  [221,"leithéid","the like / such"],[222,"cuma","shape / appearance / don't care"],[223,"cúpla","couple / a few / twins"],[224,"oideachas","education"],[225,"beir","bear / catch / give birth"],
+  [226,"mol","praise / suggest / recommend"],[227,"aois","age"],[228,"cineál","kind / type / sort of"],[229,"inis","tell / island"],[230,"oiread","amount / as much"],
+  [231,"líon","fill / number / net"],[232,"páirtí","party"],[233,"ball","member / limb"],[234,"lán","full"],[235,"siar","west / back"],
+  [236,"cúirt","court"],[237,"cathair","city"],[238,"máthair","mother"],[239,"náisiúnta","national"],[240,"sampla","example"],
+  [241,"lig","let / allow"],[242,"doras","door"],[243,"uí","grandson of (in surnames)"],[244,"oifig","office"],[245,"timpeall","around"],
+  [246,"tarraing","pull / draw / attract"],[247,"bun","bottom / base / origin"],[248,"cos","foot / leg"],[249,"éagsúil","different / various"],[250,"dún","close / fort"],
+  [251,"cáin","tax / criticise"],[252,"córas","system"],[253,"istigh","inside"],[254,"forbair","develop"],[255,"post","post / job / mail"],
+  [256,"airteagal","article"],[257,"croí","heart"],[258,"mórán","much / many"],[259,"rith","run"],[260,"seisean","he (emphatic)"],
+  [261,"seas","stand"],[262,"barr","top / tip"],[263,"dáil","Dáil / meeting / share out"],[264,"siúd","that / those (over there)"],[265,"tréimhse","period / spell"],
+  [266,"imeacht","event / departure / going"],[267,"sásta","happy / satisfied"],[268,"breá","fine / lovely"],[269,"amuigh","outside"],[270,"cúis","cause / reason / court case"],
+  [271,"réir","according to / order"],[272,"deis","opportunity / right (side)"],[273,"áirithe","certain / particular"],[274,"áitiúil","local"],[275,"saothar","work / labour"],
+  [276,"coiste","committee"],[277,"aimsir","weather / time / tense"],[278,"maidin","morning"],[279,"toradh","result / fruit"],[280,"inniu","today"],
+  [281,"suigh","sit"],[282,"breis","extra / more"],[283,"each","horse / steed"],[284,"fuil","blood"],[285,"tosach","beginning / front"],
+  [286,"tuairim","opinion"],[287,"béarla","English (language)"],[288,"láthair","present / site"],[289,"ealaín","art"],[290,"comhlacht","company / body"],
+  [291,"domhan","world"],[292,"coinnigh","keep / hold"],[293,"tit","fall"],[294,"dán","poem / fate"],[295,"caoi","way / means / opportunity"],
+  [296,"mura","if not / unless"],[297,"meán","middle / medium / means"],[298,"tí","of a house (gen.)"],[299,"sráid","street"],[300,"gnó","business"],
+  [301,"deir","says"],[302,"tamall","a while"],[303,"fíor","true"],[304,"seol","send / sail / direct"],[305,"cheana","already"],
+  [306,"iarratas","application / request"],[307,"caill","lose"],[308,"múinteoir","teacher"],[309,"Gaillimh","Galway"],[310,"cara","friend"],
+  [311,"seomra","room"],[312,"breathnaigh","look / watch / observe"],[313,"gearr","short / cut"],[314,"cosúil","similar / apparently"],[315,"luaigh","mention"],
+  [316,"dlí","law"],[317,"iarracht","attempt / effort"],[318,"cúig","five"],[319,"nós","custom / habit"],[320,"sula","before (conjunction)"],
+  [321,"áfach","however"],[322,"míle","thousand / mile"],[323,"rí","king"],[324,"slí","way / road"],[325,"úd","that / yonder"],
+  [326,"saor","free / cheap / craftsman"],[327,"foilsigh","publish"],[328,"ann","there / in it"],[329,"creid","believe"],[330,"luath","early / fast"],
+  [331,"deas","nice / right (side) / south"],[332,"fás","grow / growth"],[333,"iúl","guide / knowledge"],[334,"síl","think / suppose"],[335,"grúpa","group"],
+  [336,"coláiste","college"],[337,"láidir","strong"],[338,"um","about / around (time)"],[339,"fáth","reason"],[340,"treo","direction / towards"],
+  [341,"déag","-teen"],[342,"fadhb","problem"],[343,"cá","where"],[344,"sláinte","health"],[345,"coinne","appointment / expectation"],
+  [346,"cúl","back / behind"],[347,"pléigh","discuss / deal with"],[348,"cas","turn / twist / meet"],[349,"dara","second"],[350,"in aghaidh","against / per"],
+  [351,"aontaigh","agree"],[352,"sagart","priest"],[353,"mair","live / last / survive"],[354,"sórt","sort / kind"],[355,"Eorpach","European"],
+  [356,"tábhachtach","important"],[357,"cead","permission"],[358,"mír","piece / item / segment"],[359,"don","to the / for the"],[360,"dó","to him / two / burn"],
+  [361,"bonn","sole / coin / basis"],[362,"beo","alive / living"],[363,"íoc","pay"],[364,"dubh","black"],[365,"scéim","scheme"],
+  [366,"seans","chance"],[367,"fómhar","autumn / harvest"],[368,"bocht","poor"],[369,"aithin","recognise"],[370,"cor","turn / twist / movement"],
+  [371,"cogadh","war"],[372,"poiblí","public"],[373,"thiar","in the west / behind"],[374,"amhrán","song"],[375,"tuill","earn / deserve"],
+  [376,"foghlaim","learn / learning"],[377,"lacha","duck"],[378,"cailín","girl"],[379,"gaoth","wind"],[380,"céim","step / degree / stage"],
+  [381,"ceathair","four"],[382,"bia","food"],[383,"dream","group / crowd"],[384,"cumas","ability / power"],[385,"amhlaidh","likewise / so"],
+  [386,"at","swell / swelling"],[387,"tráth","time / once / occasion"],[388,"clann","children / family"],[389,"leanbh","child / baby"],[390,"leas","benefit / welfare"],
+  [391,"fonn","desire / tune / eagerness"],[392,"oscail","open"],[393,"stair","history"],[394,"críoch","end / boundary / territory"],[395,"brí","meaning / force / vigour"],
+  [396,"athraigh","change"],[397,"cúram","care / responsibility"],[398,"ollscoil","university"],[399,"ceannas","authority / dominance"],[400,"seachas","rather than / compared to"],
+  [401,"ól","drink"],[402,"cosain","defend / cost / protect"],[403,"cibé","whoever / whatever"],[404,"díol","sell / sale"],[405,"iontach","wonderful / very"],
+  [406,"roinnt","some / a number of"],[407,"imir","play (a game)"],[408,"más","if it is"],[409,"loch","lake"],[410,"abhaile","home(wards)"],
+  [411,"athrú","change (noun)"],[412,"leibhéal","level"],[413,"forbairt","development"],[414,"cumhacht","power"],[415,"cumann","association / society"],
+  [416,"toisc","because / factor"],[417,"bád","boat"],[418,"grá","love"],[419,"ionann","same / equal"],[420,"soláthair","supply / provide"],
+  [421,"crann","tree"],[422,"ocht","eight"],[423,"tacaíocht","support"],[424,"páirt","part / role"],[425,"farraige","sea"],
+  [426,"cónaigh","dwell / live / reside"],[427,"cloch","stone"],[428,"cinnte","certain / sure"],[429,"sinn","we / us"],[430,"glan","clean / clear"],
+  [431,"comórtas","competition"],[432,"solas","light"],[433,"foirm","form"],[434,"teastaigh","be needed / want"],[435,"tuaisceart","north"],
+  [436,"teideal","title"],[437,"litir","letter"],[438,"gné","aspect / feature / gender"],[439,"plean","plan"],[440,"suim","interest / sum"],
+  [441,"cruthaigh","create / prove"],[442,"páirc","park / field"],[443,"beatha","life / livelihood"],[444,"teaghlach","household / family"],[445,"léann","learning / scholarship"],
+  [446,"bó","cow"],[447,"Mór","big / great (in names)"],[448,"aithne","acquaintance / knowing"],[449,"rogha","choice"],[450,"bris","break"],
+  [451,"pointe","point"],[452,"bailigh","collect / gather"],[453,"cuairt","visit"],[454,"dath","colour"],[455,"Sasana","England"],
+  [456,"olc","bad / evil"],[457,"im","butter"],[458,"file","poet"],[459,"bog","soft / move"],[460,"leath","half / spread"],
+  [461,"sóisialta","social"],[462,"laghad","least / smallness"],[463,"féile","festival / generosity"],[464,"uasal","noble / Mr."],[465,"conas","how"],
+  [466,"léigh","read"],[467,"deacair","difficult"],[468,"ceannaigh","buy"],[469,"lorg","seek / track / trace"],[470,"aontas","union"],
+  [471,"clog","clock / bell"],[472,"té","person who / the one who"],[473,"maraigh","kill"],[474,"thuaidh","to the north / northward"],[475,"dírigh","straighten / direct / focus"],
+  [476,"gníomh","action / deed"],[477,"grian","sun"],[478,"dócha","likely / probable"],[479,"socraigh","settle / arrange / decide"],[480,"úr","fresh / new"],
+  [481,"deireanach","last / late"],[482,"freagra","answer"],[483,"comhphobal","community"],[484,"cuí","suitable / fitting"],[485,"arm","army"],
+  [486,"buachaill","boy"],[487,"dáta","date"],[488,"Domhnach","Sunday"],[489,"dul","going"],[490,"bán","white"],
+  [491,"éigean","force / necessity"],[492,"amhras","doubt / suspicion"],[493,"scaoil","release / loosen / shoot"],[494,"sibh","you (plural)"],[495,"lár","centre / middle"],
+  [496,"píosa","piece"],[497,"thíos","below / down there"],[498,"trácht","traffic / mention / comment"],[499,"líne","line"],[500,"ór","gold"],
+  [501,"seacht","seven"],[502,"tráthnóna","evening / afternoon"],[503,"éist","listen"],[504,"rang","class"],[505,"samhradh","summer"],
+  [506,"fóill","yet / still / patience"],[507,"dúchas","heritage / native place"],[508,"turas","journey / trip"],[509,"os","above / over"],[510,"mó","bigger / more"],
+  [511,"ith","eat"],[512,"tuairisc","report"],[513,"speisialta","special"],[514,"cuimhne","memory"],[515,"comhair","towards (in front of)"],
+  [516,"téarma","term"],[517,"cuireadh","invitation"],[518,"luigh","lie (down)"],[519,"beith","being / birch tree"],[520,"riail","rule"],
+  [521,"Meiriceá","America"],[522,"fógra","notice / advertisement"],[523,"thuas","up / above"],[524,"páipéar","paper"],[525,"beart","plan / deed / bundle"],
+  [526,"tagair","refer"],[527,"cabhair","help"],[528,"sraith","series / row"],[529,"treoir","guidance / direction"],[530,"léamh","reading"],
+  [531,"tine","fire"],[532,"áireamh","counting / calculation"],[533,"corp","body"],[534,"craobh","branch / championship"],[535,"oifigeach","officer / official"],
+  [536,"nigh","wash"],[537,"fill","return / fold"],[538,"mian","desire / wish"],[539,"cultúr","culture"],[540,"deara","notice (ar a shúile)"],
+  [541,"siopa","shop"],[542,"Éireannach","Irish (person)"],[543,"mínigh","explain"],[544,"amharc","look / view"],[545,"oibrigh","work / operate"],
+  [546,"reacht","statute / act"],[547,"cuimhnigh","remember"],[548,"intinn","mind / intention"],[549,"polasaí","policy"],[550,"capall","horse"],
+  [551,"scannán","film"],[552,"freagair","answer / reply"],[553,"gníomhaíocht","activity"],[554,"bua","victory / talent"],[555,"údar","author / cause"],
+  [556,"leaba","bed"],[557,"comhalta","member / fellow"],[558,"tuismitheoir","parent"],[559,"deich","ten"],[560,"rún","secret / intention / resolution"],
+  [561,"teilifís","television"],[562,"dearg","red"],[563,"tagairt","reference"],[564,"freastail","attend / serve"],[565,"eagla","fear"],
+  [566,"baint","connection / relevance"],[567,"slán","safe / goodbye / whole"],[568,"ainneoin","despite"],[569,"garda","guard / police officer"],[570,"braith","depend / feel / sense"],
+  [571,"leasaigh","amend / improve"],[572,"ceangail","tie / bind / connect"],[573,"laistigh","within"],[574,"raidió","radio"],[575,"éadach","cloth / clothes"],
+  [576,"tionchar","influence"],[577,"idirnáisiúnta","international"],[578,"eagraíocht","organisation"],[579,"aird","attention / height / direction"],[580,"fáilte","welcome"],
+  [581,"aer","air"],[582,"pós","marry"],[583,"beagán","a little / few"],[584,"dráma","drama"],[585,"caighdeán","standard"],
+  [586,"fiche","twenty"],[587,"luach","value / price"],[588,"pictiúr","picture"],[589,"déanach","late"],[590,"airgeadas","finance"],
+  [591,"domhain","deep"],[592,"sise","she (emphatic)"],[593,"feidhmigh","function / implement"],[594,"coinníoll","condition"],[595,"sliabh","mountain"],
+  [596,"réitigh","solve / prepare / clear"],[597,"réidh","ready / smooth / finished"],[598,"fírinne","truth"],[599,"foinse","source"],[600,"ré","era / period / moon"],
+  [601,"neart","strength / plenty"],[602,"comhar","cooperation"],[603,"tusa","you (emphatic)"],[604,"oifigiúil","official"],[605,"uachtarán","president"],
+  [606,"toil","will / desire"],[607,"modh","mode / method / mood"],[608,"cum","compose / shape"],[609,"scríbhneoir","writer"],[610,"triúr","three people"],
+  [611,"leigheas","cure / medicine"],[612,"scrúdú","exam / examination"],[613,"Nollaig","Christmas / December"],[614,"pleanáil","planning"],[615,"fógair","announce / proclaim"],
+  [616,"cuidigh","help"],[617,"roghnaigh","choose / select"],[618,"iontas","surprise / wonder"],[619,"smaoineamh","thought / idea"],[620,"cuideachta","company"],
+  [621,"stop","stop"],[622,"cuntas","account"],[623,"creideamh","belief / faith / religion"],[624,"aonar","alone / one person"],[625,"páirteach","involved / participating"],
+  [626,"taispeáin","show / display"],[627,"geal","bright / white"],[628,"filíocht","poetry"],[629,"baol","danger"],[630,"tiarna","lord"],
+  [631,"ciallaigh","mean / signify"],[632,"láithreach","immediately / present"],[633,"coimeád","keep / maintain"],[634,"marbh","dead"],[635,"críochnaigh","finish / complete"],
+  [636,"smaoinigh","think"],[637,"teacht","coming / arrival"],[638,"deoch","drink (noun)"],[639,"parlaimint","parliament"],[640,"os cionn","above / over"],
+  [641,"álainn","beautiful"],[642,"greim","grip / bite / stitch"],[643,"carr","car"],[644,"fosta","also (Ulster)"],[645,"staidéar","study"],
+  [646,"suíomh","site / position"],[647,"aimsigh","find / locate"],[648,"géar","sharp / keen"],[649,"dalta","pupil / foster-child"],[650,"gar","near / favour"],
+  [651,"deo","ever (go deo)"],[652,"faisnéis","information"],[653,"costas","cost"],[654,"port","tune / port / bank"],[655,"trom","heavy"],
+  [656,"fianaise","evidence / witness"],[657,"droim","back / ridge"],[658,"dáiríre","serious / really"],[659,"iompair","carry / behave"],[660,"troid","fight"],
+  [661,"anam","soul"],[662,"leagan","version / laying down"],[663,"teagasc","teaching / instruction"],[664,"cruinniú","meeting / gathering"],[665,"eagraigh","organise"],
+  [666,"bhuel","well"],[667,"ócáid","occasion"],[668,"codail","sleep"],[669,"uimhir","number"],[670,"tuath","laity / north / countryside"],
+  [671,"brath","betray / depend / intend"],[672,"dochtúir","doctor"],[673,"fiafraigh","ask / inquire"],[674,"ciall","sense / meaning"],[675,"ardaigh","raise / lift"],
+  [676,"buaigh","win"],[677,"oidhreacht","heritage / inheritance"],[678,"cinntigh","ensure / make certain"],[679,"abhainn","river"],[680,"deimhin","certain / sure"],
+  [681,"cothaigh","nourish / maintain / foster"],[682,"á","being (verbal particle)"],[683,"glas","green / grey / lock"],[684,"airde","height / attention"],[685,"soiléir","clear / obvious"],
+  [686,"pearsanta","personal"],[687,"foras","institution / basis / growth"],[688,"aistrigh","move / translate"],[689,"spéis","interest"],[690,"dualgas","duty"],
+  [691,"iníon","daughter"],[692,"dearmad","mistake / forgetting"],[693,"sín","stretch / extend"],[694,"próiseas","process"],[695,"spórt","sport / fun"],
+  [696,"fostaíocht","employment"],[697,"banc","bank"],[698,"gleann","glen / valley"],[699,"litríocht","literature"],[700,"comhlíon","fulfil"],
+  [701,"sean","old"],[702,"polaitíocht","politics"],[703,"réim","regime / range"],[704,"ráiteas","statement"],[705,"iarthar","west"],
+  [706,"sonraigh","specify / notice"],[707,"gnáth","usual / ordinary"],[708,"beartaigh","plan / decide / intend"],[709,"guth","voice"],[710,"bronn","bestow / grant"],
+  [711,"dochar","harm / damage"],[712,"slua","crowd"],[713,"cinneadh","decision"],[714,"nuachtán","newspaper"],[715,"radharc","sight / view / scene"],
+  [716,"cion","share / affection / offence"],[717,"iasc","fish"],[718,"dár","of our / that was"],[719,"spreag","inspire / motivate"],[720,"margadh","market / bargain"],
+  [721,"toghchán","election"],[722,"comhaontú","agreement"],[723,"brúigh","push / press"],[724,"diabhal","devil"],[725,"daonna","human"],
+  [726,"leathan","wide / broad"],[727,"socrú","arrangement / settlement"],[728,"feachtas","campaign"],[729,"club","club"],[730,"deartháir","brother"],
+  [731,"formhór","majority"],[732,"ordú","order"],[733,"bláth","flower / bloom"],[734,"nuacht","news"],[735,"riachtanas","requirement / necessity"],
+  [736,"fuinneog","window"],[737,"teorainn","border / limit"],[738,"tuiscint","understanding"],[739,"gairid","short / near"],[740,"trasna","across"],
+  [741,"taisteal","travel"],[742,"malairt","exchange / opposite"],[743,"suíochán","seat"],[744,"thall","over there"],[745,"áis","facility / convenience"],
+  [746,"ainmhí","animal"],[747,"nóiméad","minute"],[748,"íseal","low"],[749,"liosta","list"],[750,"caibidil","chapter"],
+  [751,"feabhas","excellence / improvement"],[752,"gáir","shout / cry / cheer"],[753,"siúl","walking"],[754,"carraig","rock"],[755,"taca","support / prop / time"],
+  [756,"trá","beach / strand"],[757,"glúin","knee / generation"],[758,"stiúrthóir","director"],[759,"cumarsáid","communication"],[760,"polaitiúil","political"],
+  [761,"San","Saint"],[762,"maithe","good (plural) / sake"],[763,"cnoc","hill"],[764,"Caitliceach","Catholic"],[765,"taighde","research"],
+  [766,"imreoir","player"],[767,"aigne","mind"],[768,"earra","goods / item"],[769,"aonad","unit"],[770,"ceadaigh","permit / allow"],
+  [771,"dúil","desire / fondness / element"],[772,"mall","slow / late"],[773,"saghas","type / sort"],[774,"duais","prize"],[775,"balla","wall"],
+  [776,"taitin","please / enjoy"],[777,"tábhacht","importance"],[778,"oireachtas","assembly / Oireachtas"],[779,"méadaigh","increase"],[780,"Satharn","Saturday"],
+  [781,"comhartha","sign / signal"],[782,"mála","bag"],[783,"pé","whatever / whoever"],[784,"caisleán","castle"],[785,"scil","skill"],
+  [786,"saighdiúir","soldier"],[787,"múin","teach"],[788,"síocháin","peace"],[789,"nóta","note"],[790,"taithí","experience"],
+  [791,"naoi","nine"],[792,"institiúid","institute"],[793,"diúltaigh","refuse / decline"],[794,"meall","lump / attract / entice"],[795,"cuspóir","aim / objective"],
+  [796,"ábalta","able"],[797,"ainmnigh","name / nominate"],[798,"stáisiún","station"],[799,"vóta","vote"],[800,"ginearálta","general"],
+  [801,"glór","voice / sound"],[802,"riachtanach","necessary"],[803,"imní","worry / anxiety"],[804,"gníomhaigh","act / activate"],[805,"gluais","move / glossary"],
+  [806,"mothaigh","feel / notice"],[807,"ceannaire","leader"],[808,"aníos","up (from below)"],[809,"eaglais","church"],[810,"bainisteoir","manager"],
+  [811,"cathaoirleach","chairperson"],[812,"eolaíocht","science"],[813,"deontas","grant"],[814,"ordaigh","order / ordain"],[815,"rialta","regular"],
+  [816,"teachta","deputy / envoy"],[817,"ospidéal","hospital"],[818,"bille","bill"],[819,"cill","church / cell"],[820,"teagmháil","contact"],
+  [821,"comhrá","conversation"],[822,"foirgneamh","building"],[823,"tionscal","industry"],[824,"cruinnigh","gather / assemble"],[825,"nocht","reveal / expose / bare"],
+  [826,"tada","nothing"],[827,"tuarascáil","report"],[828,"rialachán","regulation"],[829,"bac","hinder / prevent / obstacle"],[830,"cloigeann","head / skull"],
+  [831,"paróiste","parish"],[832,"aidhm","aim / goal"],[833,"trua","pity"],[834,"gáire","laugh / smile"],[835,"cló","print / type / shape"],
+  [836,"éan","bird"],[837,"gearán","complaint"],[838,"buíochas","thanks / gratitude"],[839,"eachtra","adventure / incident"],[840,"adhmad","wood / timber"],
+  [841,"poll","hole"],[842,"glaoigh","call"],[843,"scríbhinn","writing / document"],[844,"samhlaigh","imagine"],[845,"spéir","sky"],
+  [846,"cruinn","round / accurate"],[847,"scór","score / twenty"],[848,"milliún","million"],[849,"éiligh","claim / demand"],[850,"ioncam","income"],
+  [851,"fuar","cold"],[852,"leathanach","page"],[853,"ráta","rate"],[854,"teip","fail / failure"],[855,"Londain","London"],
+  [856,"gaol","relation / relationship"],[857,"breac","trout / speckled / jot"],[858,"timpeallacht","environment"],[859,"easpa","lack / absence"],[860,"galar","disease"],
+  [861,"gasúr","child / youngster"],[862,"gorm","blue"],[863,"deacracht","difficulty"],[864,"oiliúint","training"],[865,"caidreamh","relations / dealings"],
+  [866,"ciúin","quiet"],[867,"can","sing"],[868,"Márta","March"],[869,"crua","hard / tough"],[870,"iarrthóir","candidate / applicant"],
+  [871,"bosca","box"],[872,"peil","football"],[873,"aitheantas","recognition / identity"],[874,"theas","to the south / southern"],[875,"éineacht","together (in éineacht)"],
+  [876,"traidisiún","tradition"],[877,"ullmhaigh","prepare"],[878,"réimse","range / field"],[879,"clé","left"],[880,"Luan","Monday"],
+  [881,"ceangal","connection / binding"],[882,"caiteachas","expenditure"],[883,"punt","pound"],[884,"scrúdaigh","examine"],[885,"gluaiseacht","movement"],
+  [886,"poblacht","republic"],[887,"beartas","policy"],[888,"cath","battle"],[889,"urlár","floor"],[890,"triail","trial / test / try"],
+  [891,"seasamh","standing / stance"],[892,"fuinneamh","energy"],[893,"béim","emphasis / stress / blow"],[894,"tóir","pursuit / search"],[895,"coitianta","common"],
+  [896,"éisteacht","listening / hearing"],[897,"cothrom","equal / fair / level"],[898,"sroich","reach"],[899,"cál","cabbage / reputation"],[900,"foráil","provision / provide for"],
+  [901,"bainistíocht","management"],[902,"fostaí","employee"],[903,"Corcaigh","Cork"],[904,"brú","pressure / push / hostel"],[905,"taifead","record"],
+  [906,"scrios","destroy"],[907,"nádúrtha","natural"],[908,"bunscoil","primary school"],[909,"eas","waterfall"],[910,"saothraigh","work / earn / cultivate"],
+  [911,"iomaí","many"],[912,"scoláire","scholar / student"],[913,"teann","tight / tense / bold"],[914,"léiriú","demonstration / production"],[915,"muna","if not (variant)"],
+  [916,"binn","sweet / melodious / gable / peak"],[917,"Aibreán","April"],[918,"éifeacht","effect"],[919,"beagnach","almost"],[920,"buille","blow / strike"],
+  [921,"dóthain","enough"],[922,"máistir","master"],[923,"tor","bush"],[924,"níl","is not"],[925,"croch","hang / gallows"],
+  [926,"amhail","like / as if"],[927,"fórsa","force"],[928,"ord","order / hammer"],[929,"déanta","done / made"],[930,"comhdháil","conference"],
+  [931,"taoiseach","chief / Taoiseach"],[932,"domhanda","global / worldwide"],[933,"madra","dog"],[934,"seilbh","possession"],[935,"óige","youth"],
+  [936,"laoch","hero"],[937,"iniúch","inspect / audit"],[938,"sliocht","extract / descendants / passage"],[939,"comhairleoir","councillor / advisor"],[940,"stad","stop"],
+  [941,"fine","clan / fine / penalty"],[942,"long","ship"],[943,"éifeachtach","effective"],[944,"lasmuigh","outside"],[945,"gloine","glass"],
+  [946,"breithiúnas","judgement"],[947,"sáraigh","surpass / violate"],[948,"on","from (dialectal)"],[949,"craiceann","skin"],[950,"cuimhin","memory / remember"],
+  [951,"cosc","prevent / ban"],[952,"tionscadal","project"],[953,"iasacht","loan / borrowing"],[954,"feasta","henceforth"],[955,"iamh","enclosure"],
+  [956,"cleacht","practise / custom"],[957,"go ceann","for (a period of time)"],[958,"leasú","amendment / improvement"],[959,"limistéar","area / territory"],[960,"ceithre","four (before noun)"],
+  [961,"Eanáir","January"],[962,"cósta","coast"],[963,"babhta","bout / round / time"],[964,"éileamh","demand / claim"],[965,"ionsaí","attack"],
+  [966,"aisteach","strange"],[967,"ionadh","surprise / wonder"],[968,"teas","heat"],[969,"méad","size / extent"],[970,"aíocht","hospitality"],
+  [971,"tionscnamh","initiative / project"],[972,"cóip","copy"],[973,"bunúsach","basic / fundamental"],[974,"tae","tea"],[975,"cáilíocht","quality"],
+  [976,"rás","race"],[977,"bróg","shoe"],[978,"togh","elect / choose"],[979,"breith","birth / judgement / catching"],[980,"buí","yellow / grateful"],
+  [981,"cruth","shape / form"],[982,"áthas","happiness / joy"],[983,"anonn","over (to the other side)"],[984,"tuilleadh","more / additional"],[985,"téacs","text"],
+  [986,"muir","sea"],[987,"suntasach","significant / notable"],[988,"tacaigh","support"],[989,"taispeántas","exhibition / display"],[990,"feirm","farm"],
+  [991,"seal","spell / turn / a while"],[992,"struchtúr","structure"],[993,"iris","magazine / journal"],[994,"príosún","prison"],[995,"smacht","control / discipline"],
+  [996,"eisigh","issue"],[997,"muc","pig"],[998,"halla","hall"],[999,"anocht","tonight"],[1000,"dona","bad / unfortunate"],
+];
+</script>
+<script type="text/babel" data-presets="react">
+// engine.jsx — shared state, SRS logic, session engine
+// Exposes: useStore(), SESSION_SIZES, buildDeck(), normalizeAnswer()
+
+const STORAGE_KEY = "irish-flashcards-v1";
+const SESSION_SIZES = [10, 20, 50];
+
+// --- helpers ---
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function daysBetween(a, b) {
+  if (!a || !b) return 0;
+  const A = new Date(a), B = new Date(b);
+  return Math.round((B - A) / 86400000);
+}
+
+// Normalize for answer comparison: strip accents, lowercase, collapse spaces
+function normalizeAnswer(s) {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Levenshtein distance — small, iterative implementation for typo tolerance
+function editDistance(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const prev = new Array(b.length + 1);
+  const curr = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+  }
+  return prev[b.length];
+}
+
+// Fuzzy: 1 typo allowed for words >=4 letters, 0 for short words
+function fuzzyMatch(typed, target) {
+  if (!typed || !target) return false;
+  if (typed === target) return true;
+  const tol = target.length >= 5 ? 1 : 0;
+  return editDistance(typed, target) <= tol;
+}
+
+// Check if a typed answer matches ANY of the slashed alternatives in a gloss
+function matchEnglish(typed, gloss) {
+  const t = normalizeAnswer(typed);
+  if (!t) return false;
+  // gloss like "give / bring" -> ["give", "bring"]
+  const alts = gloss.split("/").map(a =>
+    normalizeAnswer(a.replace(/\([^)]*\)/g, "")) // strip parenthetical hints
+  ).filter(Boolean);
+  return alts.some(a =>
+    fuzzyMatch(t, a) ||
+    fuzzyMatch(t, `to ${a}`) ||
+    fuzzyMatch(`to ${t}`, a)
+  );
+}
+function matchIrish(typed, irish) {
+  return fuzzyMatch(normalizeAnswer(typed), normalizeAnswer(irish));
+}
+
+const DEFAULT_STATE = {
+  words: {}, // n -> { m: 0|1|2|3 (new/learning/known/mastered), seen: n, correct: n, lastSeen: iso, dueIn: days }
+  streak: { count: 0, last: null }, // last studied date
+  prefs: { theme: "a" }, // a or b (not currently used globally, each variation is independent)
+  lastSessionAt: null,
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_STATE };
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_STATE, ...parsed, words: parsed.words || {} };
+  } catch (e) {
+    return { ...DEFAULT_STATE };
+  }
+}
+function saveState(s) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch (e) {}
+}
+
+// SRS: easy / hard / again — updates mastery & dueIn
+function applyRating(word, rating) {
+  const w = word || { m: 0, seen: 0, correct: 0, dueIn: 0 };
+  const next = { ...w };
+  next.seen = (w.seen || 0) + 1;
+  next.lastSeen = todayISO();
+  if (rating === "again") {
+    next.m = 0;
+    next.dueIn = 0;
+  } else if (rating === "hard") {
+    next.correct = (w.correct || 0) + 1;
+    next.m = Math.min(2, (w.m || 0) + (w.m === 0 ? 1 : 0));
+    next.dueIn = 1;
+  } else if (rating === "easy") {
+    next.correct = (w.correct || 0) + 1;
+    next.m = Math.min(3, (w.m || 0) + 1);
+    next.dueIn = w.m >= 2 ? 7 : 3;
+  } else if (rating === "correct") {
+    next.correct = (w.correct || 0) + 1;
+    next.m = Math.min(3, (w.m || 0) + 1);
+    next.dueIn = w.m >= 2 ? 5 : 2;
+  } else if (rating === "wrong") {
+    next.m = 0;
+    next.dueIn = 0;
+  }
+  return next;
+}
+
+function masteryLabel(m) {
+  return ["Nua", "Ag foghlaim", "Eolach", "Máistreacht"][m || 0];
+}
+function masteryLabelEn(m) {
+  return ["New", "Learning", "Known", "Mastered"][m || 0];
+}
+
+// --- Deck building ---
+// strategy: 'mix' weights unknown/learning/due.
+function buildDeck(state, size, rangeStart = 0, rangeEnd = 1000) {
+  const words = window.IRISH_WORDS.filter(([n]) => n > rangeStart && n <= rangeEnd);
+  const scored = words.map(([n, ga, en]) => {
+    const w = state.words[n] || { m: 0, seen: 0, correct: 0, dueIn: 0 };
+    // priority: higher = more likely to include
+    let p = 0;
+    if (!w.seen) p += 3;               // new words first (but we want some learning in the mix)
+    if (w.m === 1) p += 4;             // learning = highest priority
+    if (w.m === 2) p += 1;             // known — occasional review
+    if (w.m === 3) p += 0.2;           // mastered — rare
+    p += Math.random() * 0.5;          // jitter so same-priority order varies
+    return { n, ga, en, w, p };
+  });
+  scored.sort((a, b) => b.p - a.p);
+  return scored.slice(0, size);
+}
+
+// Shared React store hook
+function useStore() {
+  const [state, setState] = React.useState(() => loadState());
+  const update = React.useCallback((fn) => {
+    setState(prev => {
+      const next = fn(prev);
+      saveState(next);
+      return next;
+    });
+  }, []);
+  // update after a session — handles streak
+  const completeSession = React.useCallback(() => {
+    update(prev => {
+      const today = todayISO();
+      const last = prev.streak.last;
+      let count = prev.streak.count;
+      if (last === today) {
+        // already studied today, no change
+      } else if (last && daysBetween(last, today) === 1) {
+        count = count + 1;
+      } else {
+        count = 1;
+      }
+      return { ...prev, streak: { count, last: today }, lastSessionAt: today };
+    });
+  }, [update]);
+  const rateWord = React.useCallback((n, rating) => {
+    update(prev => {
+      const cur = prev.words[n];
+      const next = applyRating(cur, rating);
+      return { ...prev, words: { ...prev.words, [n]: next } };
+    });
+  }, [update]);
+  const resetAll = React.useCallback(() => {
+    update(() => ({ ...DEFAULT_STATE }));
+  }, [update]);
+  return { state, rateWord, completeSession, resetAll, update };
+}
+
+// Stats from state
+function computeStats(state) {
+  let n = 0, learning = 0, known = 0, mastered = 0;
+  for (const v of Object.values(state.words)) {
+    n++;
+    if (v.m === 1) learning++;
+    else if (v.m === 2) known++;
+    else if (v.m === 3) mastered++;
+  }
+  return {
+    seen: n,
+    learning,
+    known: known + mastered,   // "known" for % display combines known + mastered
+    mastered,
+    total: 1000,
+    pct: Math.round(((known + mastered) / 1000) * 100),
+  };
+}
+
+// Example sentence placeholder — keeps it honest & simple
+function examplePlaceholder(ga) {
+  return `— ${ga} ${ga}? — ${ga}.`;
+}
+
+Object.assign(window, {
+  SESSION_SIZES,
+  buildDeck,
+  normalizeAnswer,
+  matchEnglish,
+  matchIrish,
+  useStore,
+  computeStats,
+  masteryLabel,
+  masteryLabelEn,
+  examplePlaceholder,
+  todayISO,
+});
+
+// variation-a.jsx — "Bog & Stone" — daylight, mossy greens, parchment
+// Screens: Home · Setup · Flashcard · Quiz · Results · List
+// Works in phone frame and at desktop widths (detects container via ResizeObserver).
+
+const A = {
+  parchment: "#f4efe4",
+  parchment2: "#ece5d4",
+  mossDeep: "#2f4a2e",
+  moss: "#5b7a3d",
+  mossSoft: "#a6b687",
+  peat: "#6b4423",
+  peatSoft: "#b69372",
+  stone: "#8a8577",
+  stoneDark: "#514d43",
+  ink: "#1e1b14",
+  rust: "#b8562f",
+  gold: "#c49a3f",
+};
+
+// --- layout context ---------------------------------------------------------
+// The component renders inside either a 390-wide phone frame OR a full desktop
+// viewport. We measure the shell and broadcast a "wide" flag through context.
+const LayoutCtx = React.createContext({ wide: false, width: 390 });
+
+function VarA_Shell({ children, footer }) {
+  const ref = React.useRef(null);
+  const [layout, setLayout] = React.useState({ wide: false, width: 390 });
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      const w = el.clientWidth;
+      setLayout({ wide: w >= 720, width: w });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <LayoutCtx.Provider value={layout}>
+      <div ref={ref} className="paper-a phone-scroll" style={{
+        width: "100%", height: "100%",
+        display: "flex", flexDirection: "column",
+        color: A.ink, fontFamily: "'Karla', sans-serif",
+        position: "relative", overflow: "hidden",
+      }}>
+        {children}
+        {footer}
+      </div>
+    </LayoutCtx.Provider>
+  );
+}
+
+// Top status-bar spacer + header
+function VarA_Header({ title, subtitle, streak, onBack, right }) {
+  const { wide } = React.useContext(LayoutCtx);
+  const padTop = wide ? 28 : 56;
+  return (
+    <div style={{ padding: `${padTop}px 22px 12px`, flexShrink: 0, maxWidth: 960, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: subtitle ? 10 : 0 }}>
+        {onBack ? (
+          <button className="btn" onClick={onBack} style={{
+            background: "none", border: "none", padding: 4, color: A.stoneDark, fontSize: 22, lineHeight: 1, cursor: "pointer",
+          }}>←</button>
+        ) : <div style={{ width: 28 }} />}
+        <div className="uncial" style={{ fontSize: wide ? 22 : 18, color: A.mossDeep, letterSpacing: 1 }}>
+          {title}
+        </div>
+        <div style={{ minWidth: 28, display: "flex", justifyContent: "flex-end" }}>
+          {right ?? (streak != null && (
+            <div className="flicker" style={{
+              display: "flex", alignItems: "center", gap: 3,
+              fontSize: 11, color: A.rust, fontWeight: 600,
+            }}>
+              <span style={{ fontSize: 13 }}>◉</span>{streak}
+            </div>
+          ))}
+        </div>
+      </div>
+      {subtitle && (
+        <div className="serif" style={{ fontSize: 13, color: A.stoneDark, fontStyle: "italic", textAlign: "center" }}>
+          {subtitle}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Grammar helper: correct Irish pluralisation after numerals
+function focalForm(n) {
+  if (n === 1) return "focal";
+  if (n >= 2 && n <= 6) return "fhocal";
+  if (n >= 7 && n <= 10) return "bhfocal";
+  return "focal";
+}
+
+// Range label e.g. "1–100" (always 1-indexed display)
+function rangeLabel(start, end) { return `${start + 1}–${end}`; }
+
+// --- HOME -------------------------------------------------------------------
+function VarA_Home({ stats, state, onOpenSetup, onShowList }) {
+  const { wide } = React.useContext(LayoutCtx);
+  const streak = state.streak.count;
+  return (
+    <VarA_Shell>
+      <VarA_Header title="Na Mílte Focal" subtitle="The Thousand Words" streak={streak} />
+
+      <div style={{
+        flex: 1, display: "flex", flexDirection: wide ? "row" : "column",
+        gap: wide ? 32 : 0, padding: wide ? "8px 32px 32px" : "0",
+        maxWidth: 960, width: "100%", margin: "0 auto", boxSizing: "border-box",
+        alignItems: wide ? "flex-start" : "stretch",
+      }}>
+        {/* Progress ring + stats */}
+        <div style={{ padding: wide ? 0 : "8px 24px 16px", textAlign: "center", flex: wide ? "0 0 320px" : "none" }}>
+          <div style={{ position: "relative", width: wide ? 220 : 160, height: wide ? 220 : 160, margin: "4px auto 12px" }}>
+            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `2px solid ${A.stone}`, opacity: 0.25 }} />
+            <div style={{ position: "absolute", inset: 10, borderRadius: "50%", border: `1px solid ${A.mossDeep}`, opacity: 0.15 }} />
+            <div style={{
+              position: "absolute", inset: 16, borderRadius: "50%",
+              background: `conic-gradient(${A.moss} ${stats.pct * 3.6}deg, ${A.parchment2} 0)`,
+              WebkitMask: "radial-gradient(circle, transparent 57%, black 58%)",
+              mask: "radial-gradient(circle, transparent 57%, black 58%)",
+            }} />
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              <div className="serif" style={{ fontSize: wide ? 68 : 48, lineHeight: 1, color: A.mossDeep, fontWeight: 500 }}>
+                {stats.pct}<span style={{ fontSize: wide ? 28 : 20, color: A.stone }}>%</span>
+              </div>
+              <div style={{ fontSize: wide ? 10 : 9, color: A.stone, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 3 }}>
+                ar eolas
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", fontSize: 11, color: A.stoneDark, marginBottom: 4 }}>
+            <StatDivA n={stats.seen} irish="feicthe" english="Seen" />
+            <div style={{ width: 1, background: A.stone, opacity: 0.25 }} />
+            <StatDivA n={stats.learning} irish="ag foghlaim" english="Learning" />
+            <div style={{ width: 1, background: A.stone, opacity: 0.25 }} />
+            <StatDivA n={stats.known} irish="eolach" english="Known" />
+          </div>
+        </div>
+
+        {/* Main actions */}
+        <div style={{ padding: wide ? 0 : "4px 22px", flex: 1, width: "100%" }}>
+          <div style={{
+            background: "#fff", border: `1px solid ${A.parchment2}`,
+            borderRadius: 18, padding: "18px 20px", marginBottom: 10,
+            boxShadow: `0 1px 0 ${A.parchment2}`,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
+              <span className="uncial" style={{ fontSize: 15, color: A.mossDeep }}>Tosaigh Seisiún</span>
+              <span style={{ fontSize: 10, color: A.stone, letterSpacing: 1, textTransform: "uppercase" }}>Start a session</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button className="btn" onClick={() => onOpenSetup("flashcard")} style={stackedBtnA(true)}>
+                <span>
+                  <span className="serif" style={{ fontSize: 16 }}>Cártaí</span>
+                  <span style={{ fontSize: 10, opacity: 0.7, marginLeft: 8, letterSpacing: 1, textTransform: "uppercase" }}>Flashcards</span>
+                </span>
+                <span style={{ fontSize: 11, opacity: 0.7 }}>›</span>
+              </button>
+              <button className="btn" onClick={() => onOpenSetup("quiz-ga-en")} style={stackedBtnA(false)}>
+                <span className="serif" style={{ fontSize: 15, color: A.ink }}>
+                  Gaeilge <span style={{ color: A.moss }}>→</span> English
+                </span>
+                <span style={{ fontSize: 10, color: A.stone, letterSpacing: 1, textTransform: "uppercase" }}>Ceist</span>
+              </button>
+              <button className="btn" onClick={() => onOpenSetup("quiz-en-ga")} style={stackedBtnA(false)}>
+                <span className="serif" style={{ fontSize: 15, color: A.ink }}>
+                  English <span style={{ color: A.moss }}>→</span> Gaeilge
+                </span>
+                <span style={{ fontSize: 10, color: A.stone, letterSpacing: 1, textTransform: "uppercase" }}>Ceist</span>
+              </button>
+            </div>
+          </div>
+
+          <button className="btn" onClick={onShowList} style={{
+            width: "100%", background: "transparent",
+            border: `1px solid ${A.parchment2}`,
+            borderRadius: 14, padding: "14px 18px",
+            textAlign: "left", cursor: "pointer",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+            <div>
+              <div className="serif" style={{ fontSize: 16, color: A.ink }}>Liosta na bhFocal</div>
+              <div style={{ fontSize: 10, color: A.stone, marginTop: 2 }}>Browse all 1,000 words</div>
+            </div>
+            <span style={{ color: A.stone }}>›</span>
+          </button>
+        </div>
+      </div>
+    </VarA_Shell>
+  );
+}
+
+function StatDivA({ n, irish, english }) {
+  return (
+    <div style={{ flex: 1, textAlign: "center" }}>
+      <div className="serif" style={{ fontSize: 22, color: A.ink, lineHeight: 1 }}>{n}</div>
+      <div style={{ fontSize: 10, color: A.stoneDark, fontStyle: "italic", marginTop: 3 }}>{irish}</div>
+      <div style={{ fontSize: 8, color: A.stone, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 1 }}>{english}</div>
+    </div>
+  );
+}
+
+const stackedBtnA = (primary) => ({
+  width: "100%",
+  display: "flex", alignItems: "center", justifyContent: "space-between",
+  background: primary ? A.mossDeep : A.parchment,
+  border: primary ? "none" : `1px solid ${A.parchment2}`,
+  color: primary ? A.parchment : A.ink,
+  borderRadius: 12, padding: "14px 18px",
+  fontFamily: "'Karla', sans-serif", fontWeight: 500,
+  cursor: "pointer", textAlign: "left",
+});
+
+// --- SETUP ------------------------------------------------------------------
+// Pick size + range before starting. Range = 100-word bands (1–100, 101–200, …).
+function VarA_Setup({ mode, state, onStart, onBack }) {
+  const [size, setSize] = React.useState(20);
+  const [band, setBand] = React.useState(0); // 0..9 -> 1..100, 101..200 etc.
+  const start = band * 100;
+  const end = start + 100;
+
+  // How many of these 100 are already seen / known?
+  const bandStats = React.useMemo(() => {
+    let seen = 0, known = 0;
+    for (let n = start + 1; n <= end; n++) {
+      const w = state.words[n];
+      if (w?.seen) seen++;
+      if ((w?.m || 0) >= 2) known++;
+    }
+    return { seen, known };
+  }, [state, start, end]);
+
+  const modeLabel = mode === "flashcard" ? "Cártaí" :
+    mode === "quiz-ga-en" ? "GA → EN" : "EN → GA";
+  const modeEn = mode === "flashcard" ? "Flashcards" : "Quiz";
+
+  return (
+    <VarA_Shell>
+      <VarA_Header title={modeLabel} subtitle={modeEn} onBack={onBack} />
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "4px 22px 22px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        {/* Session size */}
+        <div style={{ background: "#fff", border: `1px solid ${A.parchment2}`, borderRadius: 18, padding: "18px 20px", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
+            <div>
+              <span className="serif" style={{ fontSize: 36, color: A.mossDeep, fontWeight: 500, lineHeight: 1 }}>{size}</span>
+              <span className="serif" style={{ fontSize: 15, color: A.stoneDark, fontStyle: "italic", marginLeft: 8 }}>{focalForm(size)}</span>
+            </div>
+            <span style={{ fontSize: 10, color: A.stone, letterSpacing: 1, textTransform: "uppercase" }}>Méid · Size</span>
+          </div>
+          <input
+            type="range" min={5} max={100} step={5}
+            value={size}
+            onChange={(e) => setSize(parseInt(e.target.value, 10))}
+            className="focal-slider"
+            style={{ width: "100%", accentColor: A.mossDeep }}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: A.stone, marginTop: 4 }}>
+            <span>5</span><span>25</span><span>50</span><span>75</span><span>100</span>
+          </div>
+          {/* Quick presets */}
+          <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+            {[10, 20, 50].map(n => (
+              <button key={n} className="btn" onClick={() => setSize(n)} style={{
+                flex: 1, padding: "7px 0",
+                background: size === n ? A.parchment2 : "transparent",
+                border: `1px solid ${A.parchment2}`, borderRadius: 8,
+                fontFamily: "'Karla', sans-serif", fontSize: 12, color: A.stoneDark, cursor: "pointer",
+                fontWeight: size === n ? 600 : 400,
+              }}>{n}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Range picker */}
+        <div style={{ background: "#fff", border: `1px solid ${A.parchment2}`, borderRadius: 18, padding: "18px 20px", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+            <span className="serif" style={{ fontSize: 18, color: A.mossDeep, fontWeight: 500 }}>
+              Raon {rangeLabel(start, end)}
+            </span>
+            <span style={{ fontSize: 10, color: A.stone, letterSpacing: 1, textTransform: "uppercase" }}>Range</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5 }}>
+            {Array.from({ length: 10 }, (_, i) => (
+              <button key={i} className="btn" onClick={() => setBand(i)} style={{
+                padding: "10px 0",
+                background: band === i ? A.mossDeep : "transparent",
+                border: band === i ? "none" : `1px solid ${A.parchment2}`,
+                borderRadius: 8, cursor: "pointer",
+                color: band === i ? A.parchment : A.stoneDark,
+                fontFamily: "'Karla', sans-serif", fontSize: 11,
+                fontWeight: band === i ? 600 : 500,
+                fontVariantNumeric: "tabular-nums",
+              }}>
+                {i * 100 + 1}–{(i + 1) * 100}
+              </button>
+            ))}
+          </div>
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${A.parchment2}`,
+            display: "flex", justifyContent: "space-between", fontSize: 11, color: A.stoneDark }}>
+            <span><b style={{ color: A.ink }}>{bandStats.seen}</b>/100 feicthe</span>
+            <span><b style={{ color: A.moss }}>{bandStats.known}</b>/100 eolach</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: "0 22px 28px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        <button className="btn" onClick={() => onStart(mode, size, start, end)} style={{
+          width: "100%", background: A.mossDeep, color: A.parchment, border: "none",
+          borderRadius: 12, padding: "15px 0",
+          fontFamily: "'Karla', sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer",
+        }}>
+          Tosaigh · Start {size} {focalForm(size)}
+        </button>
+      </div>
+    </VarA_Shell>
+  );
+}
+
+// --- FLASHCARD session ------------------------------------------------------
+// Uses a queue we can push to on "Again" — re-appears later in same session.
+function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
+  const [queue, setQueue] = React.useState(() => initialDeck.map(c => ({ ...c })));
+  const [pos, setPos] = React.useState(0);
+  const [flipped, setFlipped] = React.useState(false);
+  const [rated, setRated] = React.useState([]); // first-rating log per unique card
+  const ratedNs = React.useRef(new Set());
+  const { wide } = React.useContext(LayoutCtx);
+
+  const card = queue[pos];
+  const totalUnique = initialDeck.length;
+  const doneCount = ratedNs.current.size;
+  const progress = (doneCount / totalUnique) * 100;
+
+  const rate = React.useCallback((rating) => {
+    if (!card) return;
+    // Only persist to SRS and log the FIRST rating per unique card,
+    // so a requeued card's second pass doesn't double-count.
+    const firstTime = !ratedNs.current.has(card.n);
+    if (firstTime) {
+      rateWord(card.n, rating);
+      ratedNs.current.add(card.n);
+      setRated(prev => [...prev, { ...card, rating }]);
+    }
+
+    let nextQueue = queue;
+    if (rating === "again") {
+      // Requeue at least 3 cards later, but not past end.
+      const insertAt = Math.min(queue.length, pos + 3 + Math.floor(Math.random() * 2));
+      nextQueue = [...queue.slice(0, pos + 1), ...queue.slice(pos + 1, insertAt), { ...card }, ...queue.slice(insertAt)];
+      setQueue(nextQueue);
+    }
+
+    const nextPos = pos + 1;
+    if (nextPos >= nextQueue.length) {
+      setTimeout(() => onFinish([...rated, ...(firstTime ? [{ ...card, rating }] : [])]), 150);
+    } else {
+      setFlipped(false);
+      setTimeout(() => setPos(nextPos), 150);
+    }
+  }, [card, queue, pos, rated, rateWord, onFinish]);
+
+  // Keyboard: Space/Enter = flip, 1 = Don't know, 2 = Hard, 3 = Easy
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); setFlipped(f => !f); }
+      else if (flipped && e.key === "1") rate("easy");
+      else if (flipped && e.key === "2") rate("hard");
+      else if (flipped && e.key === "3") rate("again");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [flipped, rate]);
+
+  if (!card) return null;
+  const cardHeight = wide ? 420 : 360;
+  const frontSize = wide ? 72 : 56;
+
+  return (
+    <VarA_Shell>
+      <VarA_Header title="Cártaí" onBack={onBack}
+        right={<span style={{ fontSize: 11, color: A.stone, fontVariantNumeric: "tabular-nums" }}>
+          {doneCount}/{totalUnique}
+        </span>} />
+      <div style={{ padding: "0 22px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        <div style={{ height: 2, background: A.parchment2, borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${progress}%`, background: A.moss, transition: "width 0.3s" }} />
+        </div>
+      </div>
+
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 24px 10px" }}>
+        <div className="flip-card" style={{ width: "100%", maxWidth: 560, height: cardHeight }}>
+          <div className={`flip-inner ${flipped ? "flipped" : ""}`} onClick={() => setFlipped(!flipped)}>
+            {/* FRONT */}
+            <div className="flip-face" style={{
+              background: "#fff", border: `1px solid ${A.parchment2}`,
+              boxShadow: `0 8px 20px rgba(30, 27, 20, 0.08), 0 1px 0 ${A.parchment2}`,
+              padding: "30px 24px", cursor: "pointer",
+            }}>
+              <div style={{ position: "absolute", top: 14, left: 14, fontSize: 10, color: A.stone, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                #{card.n} · {masteryLabel(card.w.m)}
+              </div>
+              <div style={{ position: "absolute", top: 14, right: 14, color: A.mossSoft, opacity: 0.5 }}>
+                <div className="knot-corner" />
+              </div>
+              <div className="serif" style={{
+                fontSize: frontSize, fontWeight: 500, color: A.ink,
+                textAlign: "center", lineHeight: 1.1,
+                fontStyle: card.ga.length > 10 ? "normal" : "italic",
+              }}>
+                {card.ga}
+              </div>
+              <div style={{ marginTop: 22, fontSize: 11, color: A.stone, letterSpacing: 2, textTransform: "uppercase" }}>
+                tap chun casadh · tap to flip
+              </div>
+            </div>
+
+            {/* BACK */}
+            <div className="flip-face flip-back" style={{
+              background: A.mossDeep, color: A.parchment,
+              boxShadow: `0 8px 20px rgba(30, 27, 20, 0.15)`,
+              padding: "30px 24px",
+            }}>
+              <div style={{ position: "absolute", top: 14, left: 14, fontSize: 10, color: A.mossSoft, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                English
+              </div>
+              <div className="serif" style={{
+                fontSize: wide ? 40 : 32, fontWeight: 400, textAlign: "center", lineHeight: 1.2, color: A.parchment,
+              }}>
+                {card.en}
+              </div>
+              <div style={{
+                marginTop: 22, padding: "12px 16px",
+                borderTop: `1px solid rgba(246, 239, 228, 0.15)`,
+                borderBottom: `1px solid rgba(246, 239, 228, 0.15)`,
+                fontSize: 13, fontStyle: "italic", color: A.mossSoft, textAlign: "center",
+                fontFamily: "'Cormorant Garamond', serif",
+              }}>
+                “{examplePlaceholder(card.ga)}”
+                <div style={{ fontSize: 9, marginTop: 4, letterSpacing: 1, textTransform: "uppercase", fontStyle: "normal" }}>
+                  sampla — example
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: "8px 22px 28px", flexShrink: 0, maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        {!flipped ? (
+          <div style={{ textAlign: "center", fontSize: 11, color: A.stone, paddingTop: 8 }}>
+            Nocht an freagra chun é a rátáil · {wide ? "Space to flip" : "tap to reveal"}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
+            <button className="btn" onClick={() => rate("easy")} style={rateBtnA(A.moss)}>
+              <div style={{ fontSize: 10, opacity: 0.7 }}>Éasca {wide && <span style={{ opacity: 0.6 }}>· 1</span>}</div>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>Easy</div>
+            </button>
+            <button className="btn" onClick={() => rate("hard")} style={rateBtnA(A.peat)}>
+              <div style={{ fontSize: 10, opacity: 0.7 }}>Deacair {wide && <span style={{ opacity: 0.6 }}>· 2</span>}</div>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>Hard</div>
+            </button>
+            <button className="btn" onClick={() => rate("again")} style={rateBtnA(A.rust)}>
+              <div style={{ fontSize: 10, opacity: 0.7 }}>Níl a fhios {wide && <span style={{ opacity: 0.6 }}>· 3</span>}</div>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>Don't know</div>
+            </button>
+          </div>
+        )}
+      </div>
+    </VarA_Shell>
+  );
+}
+
+const rateBtnA = (bg) => ({
+  background: bg, color: A.parchment, border: "none",
+  borderRadius: 12, padding: "12px 0", cursor: "pointer",
+  fontFamily: "'Karla', sans-serif",
+});
+
+// --- QUIZ session (typing, one-shot, highlight correct on miss) -------------
+// Renders the user's typed answer with per-character diff when wrong.
+function DiffLine({ typed, expected }) {
+  // Character-level diff using LCS-ish approach: we just show expected and
+  // colour matches green / mismatches rust.
+  const out = [];
+  const eN = expected.length, tN = typed.length;
+  // Simple alignment: iterate over expected; check against same index of typed.
+  for (let i = 0; i < eN; i++) {
+    const ec = expected[i];
+    const tc = typed[i] ?? "";
+    const match = tc.toLowerCase() === ec.toLowerCase();
+    out.push(
+      <span key={i} style={{
+        color: match ? A.moss : A.rust,
+        textDecoration: match ? "none" : "underline",
+        textDecorationColor: A.rust,
+        fontWeight: match ? 500 : 600,
+      }}>{ec}</span>
+    );
+  }
+  return <span>{out}</span>;
+}
+
+function VarA_Quiz({ initialDeck, dir, onFinish, onBack, rateWord }) {
+  const [idx, setIdx] = React.useState(0);
+  const [answer, setAnswer] = React.useState("");
+  const [phase, setPhase] = React.useState("input"); // input | correct | wrong
+  const [rated, setRated] = React.useState([]);
+  const card = initialDeck[idx];
+  const inputRef = React.useRef(null);
+  const nextBtnRef = React.useRef(null);
+  const { wide } = React.useContext(LayoutCtx);
+
+  React.useEffect(() => {
+    if (phase === "input") setTimeout(() => inputRef.current?.focus(), 50);
+    else setTimeout(() => nextBtnRef.current?.focus(), 50);
+  }, [idx, phase]);
+
+  if (!card) return null;
+  const promptWord = dir === "ga-en" ? card.ga : card.en;
+  // For en→ga we highlight against the Irish form; for ga→en against the
+  // FIRST listed alternative (shortest / canonical).
+  const expected = dir === "ga-en"
+    ? card.en.split("/")[0].replace(/\([^)]*\)/g, "").trim()
+    : card.ga;
+
+  const submit = (e) => {
+    e?.preventDefault();
+    if (phase !== "input") return;
+    if (!answer.trim()) return;
+    const ok = dir === "ga-en" ? matchEnglish(answer, card.en) : matchIrish(answer, card.ga);
+    if (ok) {
+      rateWord(card.n, "correct");
+      setPhase("correct");
+      setRated([...rated, { ...card, rating: "correct", answer }]);
+    } else {
+      rateWord(card.n, "wrong");
+      setPhase("wrong");
+      setRated([...rated, { ...card, rating: "wrong", answer }]);
+    }
+  };
+  const next = () => {
+    if (idx + 1 >= initialDeck.length) {
+      onFinish(rated);
+    } else {
+      setIdx(idx + 1);
+      setAnswer("");
+      setPhase("input");
+    }
+  };
+
+  return (
+    <VarA_Shell>
+      <VarA_Header title={dir === "ga-en" ? "Ceist · GA→EN" : "Ceist · EN→GA"} onBack={onBack}
+        right={<span style={{ fontSize: 11, color: A.stone, fontVariantNumeric: "tabular-nums" }}>{idx + 1}/{initialDeck.length}</span>} />
+      <div style={{ padding: "0 22px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        <div style={{ height: 2, background: A.parchment2, borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${(idx / initialDeck.length) * 100}%`, background: A.moss, transition: "width 0.3s" }} />
+        </div>
+      </div>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "30px 26px 20px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        <div style={{ textAlign: "center", fontSize: 10, color: A.stone, letterSpacing: 2, textTransform: "uppercase", marginBottom: 18 }}>
+          {dir === "ga-en" ? "Aistrigh go Béarla · translate to English" : "Aistrigh go Gaeilge · translate to Irish"}
+        </div>
+        <div className="serif" style={{
+          textAlign: "center", fontSize: wide ? 72 : 52, fontWeight: 500, color: A.ink,
+          lineHeight: 1.1, marginBottom: 26,
+        }}>
+          {promptWord}
+        </div>
+
+        <form onSubmit={submit} className={phase === "wrong" ? "shake" : ""}>
+          <input
+            ref={inputRef}
+            type="text"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            disabled={phase !== "input"}
+            placeholder="…"
+            style={{
+              width: "100%", boxSizing: "border-box",
+              background: "#fff",
+              border: `1.5px solid ${phase === "correct" ? A.moss : phase === "wrong" ? A.rust : A.parchment2}`,
+              borderRadius: 12, padding: "14px 16px",
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: wide ? 26 : 22, color: A.ink,
+              textAlign: "center", outline: "none",
+            }}
+            autoComplete="off" autoCorrect="off" spellCheck="false"
+          />
+        </form>
+
+        {phase === "correct" && (
+          <div style={{ marginTop: 18, textAlign: "center" }}>
+            <div style={{ fontSize: 13, color: A.moss, fontWeight: 600 }}>✓ Tá an ceart agat</div>
+            <div className="serif" style={{ fontSize: 18, color: A.ink, marginTop: 6, fontStyle: "italic" }}>
+              {dir === "ga-en" ? card.en : card.ga}
+            </div>
+            {normalizeAnswer(answer) !== normalizeAnswer(expected) && (
+              <div style={{ fontSize: 10, color: A.stone, marginTop: 4, letterSpacing: 1, textTransform: "uppercase" }}>
+                close enough
+              </div>
+            )}
+          </div>
+        )}
+        {phase === "wrong" && (
+          <div style={{ marginTop: 18, textAlign: "center" }}>
+            <div style={{ fontSize: 11, color: A.rust, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>
+              Ní hea — the answer is
+            </div>
+            <div className="serif" style={{ fontSize: wide ? 32 : 26, marginTop: 2, fontWeight: 600, lineHeight: 1.2 }}>
+              <DiffLine typed={answer} expected={expected} />
+            </div>
+            {dir === "ga-en" && card.en.includes("/") && (
+              <div style={{ fontSize: 11, color: A.stoneDark, fontStyle: "italic", marginTop: 6 }}>
+                also: {card.en}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: "0 22px 28px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        {phase === "input" ? (
+          <button className="btn" onClick={submit} style={{
+            width: "100%", background: A.mossDeep, color: A.parchment,
+            border: "none", borderRadius: 12, padding: "14px 0",
+            fontSize: 14, fontFamily: "'Karla', sans-serif", fontWeight: 600,
+            cursor: "pointer", opacity: answer.trim() ? 1 : 0.4,
+          }} disabled={!answer.trim()}>
+            Seiceáil · Check {wide && <span style={{ opacity: 0.55, marginLeft: 8 }}>↵</span>}
+          </button>
+        ) : (
+          <button ref={nextBtnRef} className="btn" onClick={next} style={{
+            width: "100%", background: phase === "correct" ? A.moss : A.peat, color: A.parchment,
+            border: "none", borderRadius: 12, padding: "14px 0",
+            fontSize: 14, fontWeight: 600, cursor: "pointer",
+          }}>
+            {idx + 1 >= initialDeck.length ? "Críoch · Finish" : "Ar aghaidh · Next"}
+            {wide && <span style={{ opacity: 0.55, marginLeft: 8 }}>↵</span>}
+          </button>
+        )}
+      </div>
+    </VarA_Shell>
+  );
+}
+
+// --- RESULTS / session-complete summary -------------------------------------
+function VarA_Results({ rated, streakInfo, onHome, onAgain }) {
+  const { wide } = React.useContext(LayoutCtx);
+  const correct = rated.filter(r => r.rating === "correct" || r.rating === "easy" || r.rating === "hard").length;
+  const learned = rated.filter(r => r.rating === "easy" || r.rating === "correct").length;
+  const toReview = rated.filter(r => r.rating === "hard" || r.rating === "again" || r.rating === "wrong").length;
+  const pct = rated.length ? Math.round((correct / rated.length) * 100) : 0;
+
+  return (
+    <VarA_Shell>
+      <VarA_Header title="Críoch" subtitle="Session complete" />
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 22px 12px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        <div style={{ textAlign: "center", padding: "0 6px 12px" }}>
+          <div className="uncial" style={{ fontSize: wide ? 32 : 26, color: A.mossDeep, margin: "10px 0 4px" }}>
+            Maith thú!
+          </div>
+          <div className="serif" style={{ fontSize: 14, color: A.stoneDark, fontStyle: "italic", marginBottom: 18 }}>
+            Well done.
+          </div>
+          <div style={{ background: "#fff", borderRadius: 18, padding: "22px 16px 18px", border: `1px solid ${A.parchment2}` }}>
+            <div className="serif" style={{ fontSize: wide ? 88 : 72, color: A.moss, lineHeight: 1, fontWeight: 500 }}>
+              {pct}<span style={{ fontSize: wide ? 36 : 28, color: A.stone }}>%</span>
+            </div>
+            <div style={{ fontSize: 11, color: A.stone, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 4 }}>
+              {correct} de {rated.length} ceart
+            </div>
+
+            {/* Breakdown */}
+            <div style={{ display: "flex", marginTop: 18, paddingTop: 14, borderTop: `1px solid ${A.parchment2}`, gap: 4 }}>
+              <SummaryBit n={learned} irish="foghlamtha" english="Learned" color={A.moss} />
+              <div style={{ width: 1, background: A.parchment2 }} />
+              <SummaryBit n={toReview} irish="le hathbhreithniú" english="To review" color={A.peat} />
+              <div style={{ width: 1, background: A.parchment2 }} />
+              <SummaryBit n={streakInfo.count} irish="lá as a chéile" english="Day streak" color={A.rust} />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 10, color: A.stone, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, marginTop: 8 }}>
+          Athbhreithniú · Review
+        </div>
+        {rated.map((r, i) => (
+          <div key={i} style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "8px 0", borderBottom: `1px solid ${A.parchment2}`,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+              <span style={{
+                width: 5, height: 5, borderRadius: "50%", flexShrink: 0,
+                background: r.rating === "wrong" || r.rating === "again" ? A.rust :
+                  r.rating === "hard" ? A.peat : A.moss,
+              }} />
+              <span className="serif" style={{ fontSize: 17, color: A.ink }}>{r.ga}</span>
+            </div>
+            <span style={{ fontSize: 12, color: A.stone, fontStyle: "italic", textAlign: "right", marginLeft: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.en}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ padding: "12px 22px 28px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        <button className="btn" onClick={onHome} style={{
+          background: "transparent", border: `1px solid ${A.parchment2}`,
+          color: A.ink, borderRadius: 12, padding: "13px 0",
+          fontFamily: "'Karla', sans-serif", fontSize: 13, cursor: "pointer",
+        }}>Abhaile · Home</button>
+        <button className="btn" onClick={onAgain} style={{
+          background: A.mossDeep, border: "none",
+          color: A.parchment, borderRadius: 12, padding: "13px 0",
+          fontFamily: "'Karla', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer",
+        }}>Arís · Again</button>
+      </div>
+    </VarA_Shell>
+  );
+}
+
+function SummaryBit({ n, irish, english, color }) {
+  return (
+    <div style={{ flex: 1, textAlign: "center" }}>
+      <div className="serif" style={{ fontSize: 28, color, fontWeight: 500, lineHeight: 1 }}>{n}</div>
+      <div style={{ fontSize: 9, color: A.stoneDark, fontStyle: "italic", marginTop: 4 }}>{irish}</div>
+      <div style={{ fontSize: 8, color: A.stone, letterSpacing: 1.5, textTransform: "uppercase", marginTop: 1 }}>{english}</div>
+    </div>
+  );
+}
+
+// --- WORD LIST --------------------------------------------------------------
+function VarA_List({ state, onBack }) {
+  const [range, setRange] = React.useState(0);
+  const slice = window.IRISH_WORDS.slice(range * 100, range * 100 + 100);
+  const stripRef = React.useRef(null);
+  const tabRefs = React.useRef([]);
+  const listRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const strip = stripRef.current;
+    const tab = tabRefs.current[range];
+    if (!strip || !tab) return;
+    const padding = 24;
+    const tabLeft = tab.offsetLeft;
+    const tabRight = tabLeft + tab.offsetWidth;
+    const viewLeft = strip.scrollLeft;
+    const viewRight = viewLeft + strip.clientWidth;
+    if (tabRight + padding > viewRight) {
+      strip.scrollTo({ left: tabRight + padding - strip.clientWidth, behavior: "smooth" });
+    } else if (tabLeft - padding < viewLeft) {
+      strip.scrollTo({ left: Math.max(0, tabLeft - padding), behavior: "smooth" });
+    }
+    if (listRef.current) listRef.current.scrollTop = 0;
+  }, [range]);
+
+  const onListScroll = (e) => {
+    const el = e.currentTarget;
+    if (range >= 9) return;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) {
+      setRange(r => Math.min(9, r + 1));
+    }
+  };
+
+  return (
+    <VarA_Shell>
+      <VarA_Header title="Liosta" onBack={onBack} />
+      <div ref={stripRef} style={{ padding: "0 18px 8px", display: "flex", gap: 4, overflowX: "auto", scrollBehavior: "smooth", maxWidth: 960, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        {Array.from({ length: 10 }, (_, i) => (
+          <button key={i} ref={(el) => (tabRefs.current[i] = el)} className="btn" onClick={() => setRange(i)} style={{
+            flexShrink: 0, padding: "5px 10px", fontSize: 10,
+            border: "none", borderRadius: 3,
+            background: range === i ? A.mossDeep : "transparent",
+            color: range === i ? A.parchment : A.stone, cursor: "pointer",
+            fontFamily: "'Karla', sans-serif", fontWeight: range === i ? 600 : 400,
+          }}>
+            {i * 100 + 1}–{(i + 1) * 100}
+          </button>
+        ))}
+      </div>
+      <div ref={listRef} onScroll={onListScroll} style={{ flex: 1, overflowY: "auto", padding: "0 22px 28px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        {slice.map(([n, ga, en]) => {
+          const m = state.words[n]?.m || 0;
+          const color = m === 3 ? A.gold : m === 2 ? A.moss : m === 1 ? A.peat : A.stone;
+          return (
+            <div key={n} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "8px 0", borderBottom: `1px solid ${A.parchment2}`,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 9, color: A.stone, width: 28, fontVariantNumeric: "tabular-nums", textAlign: "right" }}>
+                {n}
+              </span>
+              <span className="serif" style={{ fontSize: 16, color: A.ink, flex: 1, fontWeight: 500 }}>{ga}</span>
+              <span style={{ fontSize: 11, color: A.stoneDark, fontStyle: "italic", maxWidth: 220, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{en}</span>
+            </div>
+          );
+        })}
+      </div>
+    </VarA_Shell>
+  );
+}
+
+// --- ROOT -------------------------------------------------------------------
+function VariationA() {
+  const { state, rateWord, completeSession } = useStore();
+  const [screen, setScreen] = React.useState("home"); // home | setup | flashcard | quiz-ga-en | quiz-en-ga | results | list
+  const [mode, setMode] = React.useState("flashcard");
+  const [setupMode, setSetupMode] = React.useState(null);
+  const [deck, setDeck] = React.useState([]);
+  const [range, setRange] = React.useState({ start: 0, end: 1000 });
+  const [rated, setRated] = React.useState([]);
+
+  const stats = computeStats(state);
+
+  const openSetup = (m) => { setSetupMode(m); setScreen("setup"); };
+  const onStart = (m, size, start = 0, end = 1000) => {
+    const d = buildDeck(state, size, start, end);
+    setDeck(d);
+    setMode(m);
+    setRange({ start, end });
+    setScreen(m === "flashcard" ? "flashcard" : m === "quiz-ga-en" ? "quiz-ga-en" : "quiz-en-ga");
+    setRated([]);
+  };
+  const onFinish = (r) => {
+    setRated(r);
+    completeSession();
+    setScreen("results");
+  };
+
+  if (screen === "home") return <VarA_Home stats={stats} state={state} onOpenSetup={openSetup} onShowList={() => setScreen("list")} />;
+  if (screen === "setup") return <VarA_Setup mode={setupMode} state={state} onStart={onStart} onBack={() => setScreen("home")} />;
+  if (screen === "list") return <VarA_List state={state} onBack={() => setScreen("home")} />;
+  if (screen === "flashcard") return <VarA_Flashcard initialDeck={deck} state={state} rateWord={rateWord} onFinish={onFinish} onBack={() => setScreen("home")} />;
+  if (screen === "quiz-ga-en") return <VarA_Quiz initialDeck={deck} dir="ga-en" rateWord={rateWord} onFinish={onFinish} onBack={() => setScreen("home")} />;
+  if (screen === "quiz-en-ga") return <VarA_Quiz initialDeck={deck} dir="en-ga" rateWord={rateWord} onFinish={onFinish} onBack={() => setScreen("home")} />;
+  if (screen === "results") return <VarA_Results rated={rated} streakInfo={state.streak} onHome={() => setScreen("home")} onAgain={() => onStart(mode, deck.length, range.start, range.end)} />;
+  return null;
+}
+
+Object.assign(window, { VariationA });
+
+ReactDOM.createRoot(document.getElementById("root")).render(<VariationA />);
+</script>
+</body>
+</html>
