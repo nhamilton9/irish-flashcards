@@ -1044,66 +1044,66 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
 
   return (
     <VarA_Shell>
-      <VarA_Header title=”Cártaí” onBack={onBack}
-        right={<span style={{ fontSize: 11, color: A.stone, fontVariantNumeric: “tabular-nums” }}>
+      <VarA_Header title="Cártaí" onBack={onBack}
+        right={<span style={{ fontSize: 11, color: A.stone, fontVariantNumeric: "tabular-nums" }}>
           {doneCount}/{totalUnique}
         </span>} />
-      <div style={{ padding: “0 22px”, maxWidth: 640, width: “100%”, margin: “0 auto”, boxSizing: “border-box” }}>
-        <div style={{ height: 2, background: A.parchment2, borderRadius: 2, overflow: “hidden” }}>
-          <div style={{ height: “100%”, width: `${progress}%`, background: A.moss, transition: “width 0.3s” }} />
+      <div style={{ padding: "0 22px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+        <div style={{ height: 2, background: A.parchment2, borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${progress}%`, background: A.moss, transition: "width 0.3s" }} />
         </div>
       </div>
 
       {/* Card + rating in one stable flex column — rating row always mounted so card never jumps */}
-      <div style={{ flex: 1, display: “flex”, flexDirection: “column”, alignItems: “center”, justifyContent: “center”, padding: “16px 24px 18px”, minHeight: 0 }}>
-        <div className=”flip-card” style={{ width: “100%”, maxWidth: 560, height: cardHeight }}>
-          <div className={`flip-inner ${flipped ? “flipped” : “”}`} onClick={() => !editingEx && setFlipped(!flipped)}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "16px 24px 18px", minHeight: 0 }}>
+        <div className="flip-card" style={{ width: "100%", maxWidth: 560, height: cardHeight }}>
+          <div className={`flip-inner ${flipped ? "flipped" : ""}`} onClick={() => !editingEx && setFlipped(!flipped)}>
             {/* FRONT */}
-            <div className=”flip-face” style={{
-              background: “#fff”, border: `1px solid ${A.parchment2}`,
+            <div className="flip-face" style={{
+              background: "#fff", border: `1px solid ${A.parchment2}`,
               boxShadow: `0 8px 20px rgba(30, 27, 20, 0.08), 0 1px 0 ${A.parchment2}`,
-              padding: “30px 24px”, cursor: “pointer”,
+              padding: "30px 24px", cursor: "pointer",
             }}>
-              <div style={{ position: “absolute”, top: 14, left: 14, fontSize: 10, color: A.stone, letterSpacing: 1.5, textTransform: “uppercase” }}>
+              <div style={{ position: "absolute", top: 14, left: 14, fontSize: 10, color: A.stone, letterSpacing: 1.5, textTransform: "uppercase" }}>
                 #{card.n} · {masteryLabel(card.w.m)}
               </div>
-              <div style={{ position: “absolute”, top: 14, right: 14, color: A.mossSoft, opacity: 0.5 }}>
-                <div className=”knot-corner” />
+              <div style={{ position: "absolute", top: 14, right: 14, color: A.mossSoft, opacity: 0.5 }}>
+                <div className="knot-corner" />
               </div>
-              <div className=”serif” style={{
+              <div className="serif" style={{
                 fontSize: frontSize, fontWeight: 500, color: A.ink,
-                textAlign: “center”, lineHeight: 1.1,
-                fontStyle: card.ga.length > 10 ? “normal” : “italic”,
+                textAlign: "center", lineHeight: 1.1,
+                fontStyle: card.ga.length > 10 ? "normal" : "italic",
               }}>
                 {card.ga}
               </div>
-              <div style={{ marginTop: 22, fontSize: 11, color: A.stone, letterSpacing: 2, textTransform: “uppercase” }}>
+              <div style={{ marginTop: 22, fontSize: 11, color: A.stone, letterSpacing: 2, textTransform: "uppercase" }}>
                 tap chun casadh · tap to flip
               </div>
             </div>
 
             {/* BACK */}
-            <div className=”flip-face flip-back” style={{
+            <div className="flip-face flip-back" style={{
               background: A.mossDeep, color: A.parchment,
               boxShadow: `0 8px 20px rgba(30, 27, 20, 0.15)`,
-              padding: “30px 24px”,
+              padding: "30px 24px",
             }}>
-              <div style={{ position: “absolute”, top: 14, left: 14, fontSize: 10, color: A.mossSoft, letterSpacing: 1.5, textTransform: “uppercase” }}>
+              <div style={{ position: "absolute", top: 14, left: 14, fontSize: 10, color: A.mossSoft, letterSpacing: 1.5, textTransform: "uppercase" }}>
                 English
               </div>
-              <div className=”serif” style={{
-                fontSize: wide ? 40 : 32, fontWeight: 400, textAlign: “center”, lineHeight: 1.2, color: A.parchment,
+              <div className="serif" style={{
+                fontSize: wide ? 40 : 32, fontWeight: 400, textAlign: "center", lineHeight: 1.2, color: A.parchment,
               }}>
                 {card.en}
               </div>
 
               {/* Editable example sentence */}
               <div style={{
-                marginTop: 22, padding: “12px 16px”, width: “calc(100% - 48px)”,
+                marginTop: 22, padding: "12px 16px", width: "calc(100% - 48px)",
                 borderTop: `1px solid rgba(246, 239, 228, 0.15)`,
                 borderBottom: `1px solid rgba(246, 239, 228, 0.15)`,
-                fontSize: 13, fontStyle: “italic”, color: A.mossSoft, textAlign: “center”,
-                fontFamily: “'Cormorant Garamond', serif”, boxSizing: “border-box”,
+                fontSize: 13, fontStyle: "italic", color: A.mossSoft, textAlign: "center",
+                fontFamily: "'Cormorant Garamond', serif", boxSizing: "border-box",
               }} onClick={(e) => e.stopPropagation()}>
                 {editingEx ? (
                   <div>
@@ -1113,28 +1113,28 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
                       onChange={(e) => setExDraft(e.target.value)}
                       onBlur={commitEx}
                       onKeyDown={(e) => {
-                        if (e.key === “Enter” && !e.shiftKey) { e.preventDefault(); commitEx(); }
-                        else if (e.key === “Escape”) { setEditingEx(false); }
+                        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commitEx(); }
+                        else if (e.key === "Escape") { setEditingEx(false); }
                       }}
                       placeholder={examplePlaceholder(card.ga)}
                       style={{
-                        width: “100%”, background: “rgba(246, 239, 228, 0.1)”,
+                        width: "100%", background: "rgba(246, 239, 228, 0.1)",
                         border: `1px solid rgba(246, 239, 228, 0.3)`, borderRadius: 6,
-                        color: A.parchment, padding: “6px 8px”,
-                        fontFamily: “'Cormorant Garamond', serif”, fontSize: 14,
-                        fontStyle: “italic”, textAlign: “center”, outline: “none”,
-                        resize: “none”, minHeight: 40, boxSizing: “border-box”,
+                        color: A.parchment, padding: "6px 8px",
+                        fontFamily: "'Cormorant Garamond', serif", fontSize: 14,
+                        fontStyle: "italic", textAlign: "center", outline: "none",
+                        resize: "none", minHeight: 40, boxSizing: "border-box",
                       }}
                     />
-                    <div style={{ fontSize: 8, marginTop: 4, letterSpacing: 1, textTransform: “uppercase”, fontStyle: “normal”, opacity: 0.7 }}>
+                    <div style={{ fontSize: 8, marginTop: 4, letterSpacing: 1, textTransform: "uppercase", fontStyle: "normal", opacity: 0.7 }}>
                       ↵ save · esc cancel
                     </div>
                   </div>
                 ) : (
-                  <div onClick={() => { setExDraft(customEx || “”); setEditingEx(true); }} style={{ cursor: “text” }}>
-                    “{displayedEx}”
-                    <div style={{ fontSize: 9, marginTop: 4, letterSpacing: 1, textTransform: “uppercase”, fontStyle: “normal” }}>
-                      sampla — {customEx ? “tap to edit” : “tap to add your own”}
+                  <div onClick={() => { setExDraft(customEx || ""); setEditingEx(true); }} style={{ cursor: "text" }}>
+                    "{displayedEx}"
+                    <div style={{ fontSize: 9, marginTop: 4, letterSpacing: 1, textTransform: "uppercase", fontStyle: "normal" }}>
+                      sampla — {customEx ? "tap to edit" : "tap to add your own"}
                     </div>
                   </div>
                 )}
@@ -1144,17 +1144,17 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
         </div>
 
         {/* Rating row — always present; invisible when unflipped so layout stays stable */}
-        <div style={{ width: “100%”, maxWidth: 560, marginTop: 10, visibility: flipped ? “visible” : “hidden” }}>
-          <div style={{ display: “grid”, gridTemplateColumns: “1fr 1fr 1fr”, gap: 7 }}>
-            <button className=”btn” onClick={() => rate(“again”)} style={rateBtnFlag(IFLAG.orange, A.parchment)}>
+        <div style={{ width: "100%", maxWidth: 560, marginTop: 10, visibility: flipped ? "visible" : "hidden" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
+            <button className="btn" onClick={() => rate("again")} style={rateBtnFlag(IFLAG.orange, A.parchment)}>
               <div style={{ fontSize: 10, opacity: 0.85 }}>Níl a fhios {wide && <span style={{ opacity: 0.7 }}>· 1</span>}</div>
               <div style={{ fontSize: 12, fontWeight: 700 }}>Don't know</div>
             </button>
-            <button className=”btn” onClick={() => rate(“hard”)} style={rateBtnFlag(IFLAG.white, A.ink, true)}>
+            <button className="btn" onClick={() => rate("hard")} style={rateBtnFlag(IFLAG.white, A.ink, true)}>
               <div style={{ fontSize: 10, opacity: 0.7 }}>Deacair {wide && <span style={{ opacity: 0.6 }}>· 2</span>}</div>
               <div style={{ fontSize: 12, fontWeight: 700 }}>Hard</div>
             </button>
-            <button className=”btn” onClick={() => rate(“easy”)} style={rateBtnFlag(IFLAG.green, A.parchment)}>
+            <button className="btn" onClick={() => rate("easy")} style={rateBtnFlag(IFLAG.green, A.parchment)}>
               <div style={{ fontSize: 10, opacity: 0.85 }}>Éasca {wide && <span style={{ opacity: 0.7 }}>· 3</span>}</div>
               <div style={{ fontSize: 12, fontWeight: 700 }}>Easy</div>
             </button>
@@ -1163,8 +1163,8 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
       </div>
 
       {/* Hint footer */}
-      <div style={{ padding: “0 22px 22px”, flexShrink: 0, maxWidth: 640, width: “100%”, margin: “0 auto”, boxSizing: “border-box”, textAlign: “center”, fontSize: 11, color: A.stone }}>
-        {!flipped && <span>Nocht an freagra chun é a rátáil · {wide ? “Space to flip” : “tap to reveal”}</span>}
+      <div style={{ padding: "0 22px 22px", flexShrink: 0, maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box", textAlign: "center", fontSize: 11, color: A.stone }}>
+        {!flipped && <span>Nocht an freagra chun é a rátáil · {wide ? "Space to flip" : "tap to reveal"}</span>}
       </div>
     </VarA_Shell>
   );
