@@ -1018,13 +1018,13 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
     }
   }, [card, queue, pos, rated, rateWord, onFinish]);
 
-  // Keyboard: Space/Enter = flip, 1 = Don't know, 2 = Hard, 3 = Easy
+  // Keyboard: Space/Enter = flip, 1 = Easy, 2 = Hard, 3 = Don't know
   React.useEffect(() => {
     const onKey = (e) => {
       if (e.key === " " || e.key === "Enter") { e.preventDefault(); setFlipped(f => !f); }
-      else if (flipped && e.key === "1") rate("again");
+      else if (flipped && e.key === "1") rate("easy");
       else if (flipped && e.key === "2") rate("hard");
-      else if (flipped && e.key === "3") rate("easy");
+      else if (flipped && e.key === "3") rate("again");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1146,17 +1146,17 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
         {/* Rating row — always present; invisible when unflipped so layout stays stable */}
         <div style={{ width: "100%", maxWidth: 560, marginTop: 10, visibility: flipped ? "visible" : "hidden" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7 }}>
-            <button className="btn" onClick={() => rate("again")} style={rateBtnFlag(IFLAG.orange, A.parchment)}>
-              <div style={{ fontSize: 10, opacity: 0.85 }}>Níl a fhios {wide && <span style={{ opacity: 0.7 }}>· 1</span>}</div>
-              <div style={{ fontSize: 12, fontWeight: 700 }}>Don't know</div>
+            <button className="btn" onClick={() => rate("easy")} style={rateBtnFlag(IFLAG.green, A.parchment)}>
+              <div style={{ fontSize: 10, opacity: 0.85 }}>Éasca {wide && <span style={{ opacity: 0.7 }}>· 1</span>}</div>
+              <div style={{ fontSize: 12, fontWeight: 700 }}>Easy</div>
             </button>
             <button className="btn" onClick={() => rate("hard")} style={rateBtnFlag(IFLAG.white, A.ink, true)}>
               <div style={{ fontSize: 10, opacity: 0.7 }}>Deacair {wide && <span style={{ opacity: 0.6 }}>· 2</span>}</div>
               <div style={{ fontSize: 12, fontWeight: 700 }}>Hard</div>
             </button>
-            <button className="btn" onClick={() => rate("easy")} style={rateBtnFlag(IFLAG.green, A.parchment)}>
-              <div style={{ fontSize: 10, opacity: 0.85 }}>Éasca {wide && <span style={{ opacity: 0.7 }}>· 3</span>}</div>
-              <div style={{ fontSize: 12, fontWeight: 700 }}>Easy</div>
+            <button className="btn" onClick={() => rate("again")} style={rateBtnFlag(IFLAG.orange, A.parchment)}>
+              <div style={{ fontSize: 10, opacity: 0.85 }}>Níl a fhios {wide && <span style={{ opacity: 0.7 }}>· 3</span>}</div>
+              <div style={{ fontSize: 12, fontWeight: 700 }}>Don't know</div>
             </button>
           </div>
         </div>
