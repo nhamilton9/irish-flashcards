@@ -209,6 +209,20 @@ function examplePlaceholder(ga) {
   return `— ${ga} ${ga}? — ${ga}.`;
 }
 
+const EXAMPLES_KEY = "irish-flashcards-examples-v1";
+function loadExamples() {
+  try { return JSON.parse(localStorage.getItem(EXAMPLES_KEY) || "{}"); }
+  catch (e) { return {}; }
+}
+function saveExample(n, text) {
+  try {
+    const all = loadExamples();
+    if (text && text.trim()) all[n] = text.trim();
+    else delete all[n];
+    localStorage.setItem(EXAMPLES_KEY, JSON.stringify(all));
+  } catch (e) {}
+}
+
 Object.assign(window, {
   SESSION_SIZES,
   buildDeck,
@@ -221,4 +235,6 @@ Object.assign(window, {
   masteryLabelEn,
   examplePlaceholder,
   todayISO,
+  loadExamples,
+  saveExample,
 });
