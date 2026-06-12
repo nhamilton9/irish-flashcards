@@ -127,10 +127,24 @@ function masteryLabelEn(m) {
   return ["New", "Learning", "Known", "Mastered"][m || 0];
 }
 
+// A word is "weak" if it's been seen but is still struggling:
+// low mastery, or a poor correct/seen ratio.
+function isWeakWord(w) {
+  return !!w && (w.seen || 0) > 0 && ((w.m || 0) <= 1 || (w.correct || 0) / w.seen < 0.6);
+}
+function countWeak(state, rangeStart = 0, rangeEnd = Infinity) {
+  let c = 0;
+  for (const [n] of window.IRISH_WORDS) {
+    if (n > rangeStart && n <= rangeEnd && isWeakWord(state.words[n])) c++;
+  }
+  return c;
+}
+
 // --- Deck building ---
 // strategy: 'mix' weights unknown/learning/due.
-function buildDeck(state, size, rangeStart = 0, rangeEnd = 1000) {
-  const words = window.IRISH_WORDS.filter(([n]) => n > rangeStart && n <= rangeEnd);
+function buildDeck(state, size, rangeStart = 0, rangeEnd = 1000, weakOnly = false) {
+  let words = window.IRISH_WORDS.filter(([n]) => n > rangeStart && n <= rangeEnd);
+  if (weakOnly) words = words.filter(([n]) => isWeakWord(state.words[n]));
   const scored = words.map(([n, ga, en]) => {
     const w = state.words[n] || { m: 0, seen: 0, correct: 0, dueIn: 0 };
     // priority: higher = more likely to include
@@ -194,13 +208,14 @@ function computeStats(state) {
     else if (v.m === 2) known++;
     else if (v.m === 3) mastered++;
   }
+  const total = (window.IRISH_WORDS || []).length || 1000;
   return {
     seen: n,
     learning,
     known: known + mastered,   // "known" for % display combines known + mastered
     mastered,
-    total: 1000,
-    pct: Math.round(((known + mastered) / 1000) * 100),
+    total,
+    pct: Math.round(((known + mastered) / total) * 100),
   };
 }
 
@@ -226,6 +241,8 @@ function saveExample(n, text) {
 Object.assign(window, {
   SESSION_SIZES,
   buildDeck,
+  isWeakWord,
+  countWeak,
   normalizeAnswer,
   matchEnglish,
   matchIrish,

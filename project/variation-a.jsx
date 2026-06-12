@@ -53,9 +53,10 @@ function VarA_Shell({ children, footer }) {
 // Top status-bar spacer + header
 function VarA_Header({ title, subtitle, streak, onBack, right }) {
   const { wide } = React.useContext(LayoutCtx);
-  const padTop = wide ? 28 : 56;
+  // On phones, respect the notch / status bar via safe-area inset.
+  const padTop = wide ? "28px" : "calc(16px + env(safe-area-inset-top, 0px))";
   return (
-    <div style={{ padding: `${padTop}px 22px 12px`, flexShrink: 0, maxWidth: 960, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+    <div style={{ padding: `${padTop} 22px 12px`, flexShrink: 0, maxWidth: 960, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: subtitle ? 10 : 0 }}>
         {onBack ? (
           <button className="btn" onClick={onBack} style={{
@@ -110,6 +111,7 @@ function VarA_Home({ stats, state, onOpenSetup, onShowList }) {
         maxWidth: 960, width: "100%", margin: "0 auto", boxSizing: "border-box",
         alignItems: wide ? "flex-start" : "stretch",
         justifyContent: wide ? "flex-start" : "space-between",
+        overflowY: "auto", minHeight: 0,
       }}>
         {/* Progress ring + stats */}
         <div style={{ padding: wide ? 0 : "8px 24px 16px", textAlign: "center", flex: wide ? "0 0 320px" : "none" }}>
@@ -141,7 +143,7 @@ function VarA_Home({ stats, state, onOpenSetup, onShowList }) {
         </div>
 
         {/* Main actions */}
-        <div style={{ padding: wide ? 0 : "4px 22px", flex: 1, width: "100%" }}>
+        <div style={{ padding: wide ? 0 : "4px 22px calc(16px + env(safe-area-inset-bottom, 0px))", flex: 1, width: "100%", boxSizing: "border-box" }}>
           <div style={{
             background: "#fff", border: `1px solid ${A.parchment2}`,
             borderRadius: 18, padding: "18px 20px", marginBottom: 10,
@@ -218,16 +220,23 @@ const stackedBtnA = (primary) => ({
 // Pick size + range before starting. Range = 100-word bands plus broader groupings.
 function VarA_Setup({ mode, state, onStart, onBack }) {
   const [size, setSize] = React.useState(20);
-  // rangeKey: "b0".."b9" for 100-bands; "h1","h2" halves; "all" everything
+  // rangeKey: "b0".."b9" for bands; "h1","h2" halves; "all" everything
   const [rangeKey, setRangeKey] = React.useState("b0");
+  const [weakOnly, setWeakOnly] = React.useState(false);
+  const TOTAL = window.IRISH_WORDS.length;
+  const BAND = TOTAL / 10; // 200-word bands with the 2000-word list
 
   const { start, end, label } = React.useMemo(() => {
-    if (rangeKey === "all") return { start: 0, end: 1000, label: "1–1000" };
-    if (rangeKey === "h1")  return { start: 0, end: 500,  label: "1–500" };
-    if (rangeKey === "h2")  return { start: 500, end: 1000, label: "501–1000" };
+    if (rangeKey === "all") return { start: 0, end: TOTAL, label: `1–${TOTAL}` };
+    if (rangeKey === "h1")  return { start: 0, end: TOTAL / 2,  label: `1–${TOTAL / 2}` };
+    if (rangeKey === "h2")  return { start: TOTAL / 2, end: TOTAL, label: `${TOTAL / 2 + 1}–${TOTAL}` };
     const i = parseInt(rangeKey.slice(1), 10);
-    return { start: i * 100, end: i * 100 + 100, label: `${i * 100 + 1}–${(i + 1) * 100}` };
-  }, [rangeKey]);
+    return { start: i * BAND, end: (i + 1) * BAND, label: `${i * BAND + 1}–${(i + 1) * BAND}` };
+  }, [rangeKey, TOTAL, BAND]);
+
+  const weakCount = React.useMemo(() => countWeak(state, start, end), [state, start, end]);
+  // If the selected range has no weak words, fall back to all words.
+  React.useEffect(() => { if (weakOnly && weakCount === 0) setWeakOnly(false); }, [weakOnly, weakCount]);
 
   const bandStats = React.useMemo(() => {
     let seen = 0, known = 0;
@@ -247,7 +256,7 @@ function VarA_Setup({ mode, state, onStart, onBack }) {
     <VarA_Shell>
       <VarA_Header title={modeLabel} subtitle={modeEn} onBack={onBack} />
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "4px 22px 16px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "4px 22px calc(16px + env(safe-area-inset-bottom, 0px))", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         {/* Session size */}
         <div style={{ background: "#fff", border: `1px solid ${A.parchment2}`, borderRadius: 18, padding: "16px 18px", marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
@@ -290,14 +299,14 @@ function VarA_Setup({ mode, state, onStart, onBack }) {
               const k = `b${i}`;
               return (
                 <button key={k} className="btn" onClick={() => setRangeKey(k)} style={rangePill(rangeKey === k)}>
-                  {i * 100 + 1}–{(i + 1) * 100}
+                  {i * BAND + 1}–{(i + 1) * BAND}
                 </button>
               );
             })}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
-            <button className="btn" onClick={() => setRangeKey("h1")} style={rangePill(rangeKey === "h1")}>1–500</button>
-            <button className="btn" onClick={() => setRangeKey("h2")} style={rangePill(rangeKey === "h2")}>501–1000</button>
+            <button className="btn" onClick={() => setRangeKey("h1")} style={rangePill(rangeKey === "h1")}>1–{TOTAL / 2}</button>
+            <button className="btn" onClick={() => setRangeKey("h2")} style={rangePill(rangeKey === "h2")}>{TOTAL / 2 + 1}–{TOTAL}</button>
             <button className="btn" onClick={() => setRangeKey("all")} style={rangePill(rangeKey === "all")}>Uile · All</button>
           </div>
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${A.parchment2}`,
@@ -307,8 +316,34 @@ function VarA_Setup({ mode, state, onStart, onBack }) {
           </div>
         </div>
 
+        {/* Focus — all words vs weak words */}
+        <div style={{ background: "#fff", border: `1px solid ${A.parchment2}`, borderRadius: 18, padding: "14px 18px", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+            <span className="serif" style={{ fontSize: 18, color: A.mossDeep, fontWeight: 500 }}>Fócas</span>
+            <span style={{ fontSize: 10, color: A.stone, letterSpacing: 1, textTransform: "uppercase" }}>Focus</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+            <button className="btn" onClick={() => setWeakOnly(false)} style={rangePill(!weakOnly)}>
+              Gach focal · All
+            </button>
+            <button className="btn" onClick={() => weakCount > 0 && setWeakOnly(true)}
+              style={{ ...rangePill(weakOnly), opacity: weakCount === 0 ? 0.4 : 1, cursor: weakCount === 0 ? "default" : "pointer" }}>
+              Focail laga · Weak ({weakCount})
+            </button>
+          </div>
+          {weakCount === 0 ? (
+            <div style={{ marginTop: 8, fontSize: 10, color: A.stone, fontStyle: "italic" }}>
+              No weak words in this range yet — they appear once you've struggled with a word.
+            </div>
+          ) : weakOnly && weakCount < size ? (
+            <div style={{ marginTop: 8, fontSize: 10, color: A.stoneDark, fontStyle: "italic" }}>
+              Only {weakCount} weak {weakCount === 1 ? "word" : "words"} in this range — the session will be shorter.
+            </div>
+          ) : null}
+        </div>
+
         {/* Start button — inline under Range card for balanced spacing */}
-        <button className="btn" onClick={() => onStart(mode, size, start, end)} style={{
+        <button className="btn" onClick={() => onStart(mode, weakOnly ? Math.min(size, weakCount) : size, start, end, weakOnly)} style={{
           width: "100%", background: A.mossDeep, color: A.parchment, border: "none",
           borderRadius: 12, padding: "15px 0",
           fontFamily: "'Karla', sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer",
@@ -398,11 +433,14 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
   }, [flipped, rate]);
 
   if (!card) return null;
-  const cardHeight = wide ? 420 : 320;
-  const frontSize = wide ? 72 : 52;
+  // Clamp card height on small phones so the rating row always fits on screen.
+  const cardHeight = wide ? 420 : "min(320px, 44dvh)";
+  const frontSize = wide ? 72 : (card.ga.length > 12 ? 36 : 52);
 
   const customEx = examples.current[card.n];
-  const displayedEx = customEx || examplePlaceholder(card.ga);
+  const builtInEx = (window.IRISH_EXAMPLES || {})[card.n];
+  const displayedEx = customEx || (builtInEx ? builtInEx[0] : examplePlaceholder(card.ga));
+  const displayedEn = !customEx && builtInEx ? builtInEx[1] : null;
   const commitEx = () => {
     saveExample(card.n, exDraft);
     examples.current = loadExamples();
@@ -483,7 +521,7 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
                         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commitEx(); }
                         else if (e.key === "Escape") { setEditingEx(false); }
                       }}
-                      placeholder={examplePlaceholder(card.ga)}
+                      placeholder={builtInEx ? builtInEx[0] : examplePlaceholder(card.ga)}
                       style={{
                         width: "100%", background: "rgba(246, 239, 228, 0.1)",
                         border: `1px solid rgba(246, 239, 228, 0.3)`, borderRadius: 6,
@@ -500,8 +538,13 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
                 ) : (
                   <div onClick={() => { setExDraft(customEx || ""); setEditingEx(true); }} style={{ cursor: "text" }}>
                     "{displayedEx}"
+                    {displayedEn && (
+                      <div style={{ fontSize: 11, marginTop: 3, opacity: 0.75 }}>
+                        {displayedEn}
+                      </div>
+                    )}
                     <div style={{ fontSize: 9, marginTop: 4, letterSpacing: 1, textTransform: "uppercase", fontStyle: "normal" }}>
-                      sampla — {customEx ? "tap to edit" : "tap to add your own"}
+                      sampla — tap to edit
                     </div>
                   </div>
                 )}
@@ -530,7 +573,7 @@ function VarA_Flashcard({ initialDeck, onFinish, onBack, state, rateWord }) {
       </div>
 
       {/* Hint footer */}
-      <div style={{ padding: "0 22px 22px", flexShrink: 0, maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box", textAlign: "center", fontSize: 11, color: A.stone }}>
+      <div style={{ padding: "0 22px calc(16px + env(safe-area-inset-bottom, 0px))", flexShrink: 0, maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box", textAlign: "center", fontSize: 11, color: A.stone }}>
         {!flipped && <span>Nocht an freagra chun é a rátáil · {wide ? "Space to flip" : "tap to reveal"}</span>}
       </div>
     </VarA_Shell>
@@ -624,8 +667,9 @@ function VarA_Quiz({ initialDeck, dir, onFinish, onBack, rateWord }) {
           {dir === "ga-en" ? "Aistrigh go Béarla · translate to English" : "Aistrigh go Gaeilge · translate to Irish"}
         </div>
         <div className="serif" style={{
-          textAlign: "center", fontSize: wide ? 72 : 52, fontWeight: 500, color: A.ink,
-          lineHeight: 1.1, marginBottom: 26,
+          textAlign: "center", fontWeight: 500, color: A.ink,
+          fontSize: promptWord.length > 14 ? (wide ? 44 : 30) : (wide ? 72 : 52),
+          lineHeight: 1.15, marginBottom: 26, overflowWrap: "break-word",
         }}>
           {promptWord}
         </div>
@@ -681,7 +725,7 @@ function VarA_Quiz({ initialDeck, dir, onFinish, onBack, rateWord }) {
         )}
       </div>
 
-      <div style={{ padding: "0 22px 28px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+      <div style={{ padding: "0 22px calc(20px + env(safe-area-inset-bottom, 0px))", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         {phase === "input" ? (
           <button className="btn" onClick={submit} style={{
             width: "100%", background: A.mossDeep, color: A.parchment,
@@ -707,12 +751,39 @@ function VarA_Quiz({ initialDeck, dir, onFinish, onBack, rateWord }) {
 }
 
 // --- RESULTS / session-complete summary -------------------------------------
+// Map a session rating to a result category
+function resultCat(rating) {
+  if (rating === "easy" || rating === "correct") return "learned";
+  if (rating === "hard") return "review";
+  return "dontknow"; // again | wrong
+}
+
 function VarA_Results({ rated, streakInfo, onHome, onAgain }) {
   const { wide } = React.useContext(LayoutCtx);
+  const [filter, setFilter] = React.useState("all");
   const correct = rated.filter(r => r.rating === "correct" || r.rating === "easy" || r.rating === "hard").length;
-  const learned = rated.filter(r => r.rating === "easy" || r.rating === "correct").length;
-  const toReview = rated.filter(r => r.rating === "hard" || r.rating === "again" || r.rating === "wrong").length;
+  const learned = rated.filter(r => resultCat(r.rating) === "learned").length;
+  const toReview = rated.filter(r => resultCat(r.rating) === "review").length;
+  const dontKnow = rated.filter(r => resultCat(r.rating) === "dontknow").length;
   const pct = rated.length ? Math.round((correct / rated.length) * 100) : 0;
+  const shown = filter === "all" ? rated : rated.filter(r => resultCat(r.rating) === filter);
+
+  const chip = (key, labelEn, count, color) => (
+    <button className="btn" onClick={() => setFilter(filter === key ? "all" : key)} style={{
+      padding: "7px 4px", borderRadius: 9, cursor: "pointer",
+      background: filter === key ? A.mossDeep : "transparent",
+      border: `1px solid ${filter === key ? A.mossDeep : A.parchment2}`,
+      color: filter === key ? A.parchment : A.stoneDark,
+      fontFamily: "'Karla', sans-serif", fontSize: 10, fontWeight: filter === key ? 600 : 500,
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
+    }}>
+      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        {key !== "all" && <span style={{ width: 5, height: 5, borderRadius: "50%", background: filter === key ? A.parchment : color }} />}
+        <b style={{ fontSize: 12 }}>{count}</b>
+      </span>
+      <span style={{ opacity: 0.85 }}>{labelEn}</span>
+    </button>
+  );
 
   return (
     <VarA_Shell>
@@ -747,7 +818,21 @@ function VarA_Results({ rated, streakInfo, onHome, onAgain }) {
         <div style={{ fontSize: 10, color: A.stone, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8, marginTop: 8 }}>
           Athbhreithniú · Review
         </div>
-        {rated.map((r, i) => (
+
+        {/* Filter chips — tap to filter the word list; tap again to clear */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 5, marginBottom: 10 }}>
+          {chip("all", "All", rated.length)}
+          {chip("learned", "Learned", learned, A.moss)}
+          {chip("review", "To review", toReview, A.peat)}
+          {chip("dontknow", "Don't know", dontKnow, A.rust)}
+        </div>
+
+        {shown.length === 0 && (
+          <div style={{ fontSize: 12, color: A.stone, fontStyle: "italic", textAlign: "center", padding: "12px 0" }}>
+            Nothing in this category — maith thú!
+          </div>
+        )}
+        {shown.map((r, i) => (
           <div key={i} style={{
             display: "flex", justifyContent: "space-between", alignItems: "center",
             padding: "8px 0", borderBottom: `1px solid ${A.parchment2}`,
@@ -765,7 +850,7 @@ function VarA_Results({ rated, streakInfo, onHome, onAgain }) {
         ))}
       </div>
 
-      <div style={{ padding: "12px 22px 28px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+      <div style={{ padding: "12px 22px calc(20px + env(safe-area-inset-bottom, 0px))", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         <button className="btn" onClick={onHome} style={{
           background: "transparent", border: `1px solid ${A.parchment2}`,
           color: A.ink, borderRadius: 12, padding: "13px 0",
@@ -816,11 +901,12 @@ function VarA_List({ state, onBack }) {
     if (listRef.current) listRef.current.scrollTop = 0;
   }, [range]);
 
+  const bands = Math.ceil(window.IRISH_WORDS.length / 100);
   const onListScroll = (e) => {
     const el = e.currentTarget;
-    if (range >= 9) return;
+    if (range >= bands - 1) return;
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) {
-      setRange(r => Math.min(9, r + 1));
+      setRange(r => Math.min(bands - 1, r + 1));
     }
   };
 
@@ -828,7 +914,7 @@ function VarA_List({ state, onBack }) {
     <VarA_Shell>
       <VarA_Header title="Liosta" onBack={onBack} />
       <div ref={stripRef} style={{ padding: "0 18px 8px", display: "flex", gap: 4, overflowX: "auto", scrollBehavior: "smooth", maxWidth: 960, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
-        {Array.from({ length: 10 }, (_, i) => (
+        {Array.from({ length: bands }, (_, i) => (
           <button key={i} ref={(el) => (tabRefs.current[i] = el)} className="btn" onClick={() => setRange(i)} style={{
             flexShrink: 0, padding: "5px 10px", fontSize: 10,
             border: "none", borderRadius: 3,
@@ -840,7 +926,7 @@ function VarA_List({ state, onBack }) {
           </button>
         ))}
       </div>
-      <div ref={listRef} onScroll={onListScroll} style={{ flex: 1, overflowY: "auto", padding: "0 22px 28px", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+      <div ref={listRef} onScroll={onListScroll} style={{ flex: 1, overflowY: "auto", padding: "0 22px calc(20px + env(safe-area-inset-bottom, 0px))", maxWidth: 640, width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
         {slice.map(([n, ga, en]) => {
           const m = state.words[n]?.m || 0;
           const color = m === 3 ? A.gold : m === 2 ? A.moss : m === 1 ? A.peat : A.stone;
@@ -870,17 +956,18 @@ function VariationA() {
   const [mode, setMode] = React.useState("flashcard");
   const [setupMode, setSetupMode] = React.useState(null);
   const [deck, setDeck] = React.useState([]);
-  const [range, setRange] = React.useState({ start: 0, end: 1000 });
+  const [range, setRange] = React.useState({ start: 0, end: window.IRISH_WORDS.length, weakOnly: false });
   const [rated, setRated] = React.useState([]);
 
   const stats = computeStats(state);
 
   const openSetup = (m) => { setSetupMode(m); setScreen("setup"); };
-  const onStart = (m, size, start = 0, end = 1000) => {
-    const d = buildDeck(state, size, start, end);
+  const onStart = (m, size, start = 0, end = window.IRISH_WORDS.length, weakOnly = false) => {
+    const d = buildDeck(state, size, start, end, weakOnly);
+    if (!d.length) return; // nothing to study in this selection
     setDeck(d);
     setMode(m);
-    setRange({ start, end });
+    setRange({ start, end, weakOnly });
     setScreen(m === "flashcard" ? "flashcard" : m === "quiz-ga-en" ? "quiz-ga-en" : "quiz-en-ga");
     setRated([]);
   };
@@ -896,7 +983,7 @@ function VariationA() {
   if (screen === "flashcard") return <VarA_Flashcard initialDeck={deck} state={state} rateWord={rateWord} onFinish={onFinish} onBack={() => setScreen("home")} />;
   if (screen === "quiz-ga-en") return <VarA_Quiz initialDeck={deck} dir="ga-en" rateWord={rateWord} onFinish={onFinish} onBack={() => setScreen("home")} />;
   if (screen === "quiz-en-ga") return <VarA_Quiz initialDeck={deck} dir="en-ga" rateWord={rateWord} onFinish={onFinish} onBack={() => setScreen("home")} />;
-  if (screen === "results") return <VarA_Results rated={rated} streakInfo={state.streak} onHome={() => setScreen("home")} onAgain={() => onStart(mode, deck.length, range.start, range.end)} />;
+  if (screen === "results") return <VarA_Results rated={rated} streakInfo={state.streak} onHome={() => setScreen("home")} onAgain={() => onStart(mode, deck.length, range.start, range.end, range.weakOnly)} />;
   return null;
 }
 
